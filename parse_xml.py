@@ -165,7 +165,7 @@ def parseXML(trackletFile):
         elif info.tag == 'poses':
           # this info is the possibly long list of poses
           for pose in info:
-            #print 'trackInfoPose:', pose.tag
+            # print 'trackInfoPose:', pose.tag
             if pose.tag == 'count':   # this should come before the others
               if newTrack.nFrames is not None:
                 raise ValueError('there are several pose lists for a single track!')

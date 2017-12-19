@@ -1,0 +1,60 @@
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+bin_path	input_velodyne.py	/^    bin_path = ".\/data\/2011_09_26\/2011_09_26_drive_0001_sync\/velodyne_points\/data\/0000000030.bin"$/;"	v
+center_to_sphere	input_velodyne.py	/^def center_to_sphere(places, size, resolution=0.50, min_value=np.array([0., -50., -4.5]), scale=4, x=(0, 90), y=(-50, 50), z=(-4.5, 5.5)):$/;"	f
+corner_to_train	input_velodyne.py	/^def corner_to_train(corners, sphere_center, resolution=0.50, x=(0, 90), y=(-50, 50), z=(-4.5, 5.5), scale=4, min_value=np.array([0., -50., -4.5])):$/;"	f
+corner_to_voxel	input_velodyne.py	/^def corner_to_voxel(voxel_shape, corners, sphere_center, scale=4):$/;"	f
+create_label	input_velodyne.py	/^def create_label(places, size, corners, resolution=0.50, x=(0, 90), y=(-50, 50), z=(-4.5, 5.5), scale=4, min_value=np.array([0., -50., -4.5])):$/;"	f
+create_objectness_label	input_velodyne.py	/^def create_objectness_label(sphere_center, resolution=0.5, x=90, y=100, z=10, scale=4):$/;"	f
+create_publish_obj	input_velodyne.py	/^def create_publish_obj(obj, places, rotates, size):$/;"	f
+filter_camera_angle	input_velodyne.py	/^def filter_camera_angle(places):$/;"	f
+get_boxcorners	input_velodyne.py	/^def get_boxcorners(places, rotates, size):$/;"	f
+load_pc_from_bin	input_velodyne.py	/^def load_pc_from_bin(bin_path):$/;"	f
+load_pc_from_pcd	input_velodyne.py	/^def load_pc_from_pcd(pcd_path):$/;"	f
+process	input_velodyne.py	/^def process(velodyne_path, label_path=None, calib_path=None, dataformat="pcd", label_type="txt", is_velo_cam=False):$/;"	f
+proj_to_velo	input_velodyne.py	/^def proj_to_velo(calib_data):$/;"	f
+publish_pc2	input_velodyne.py	/^def publish_pc2(pc, obj):$/;"	f
+raw_to_voxel	input_velodyne.py	/^def raw_to_voxel(pc, resolution=0.50, x=(0, 90), y=(-50, 50), z=(-4.5, 5.5)):$/;"	f
+read_calib_file	input_velodyne.py	/^def read_calib_file(calib_path):$/;"	f
+read_label_from_txt	input_velodyne.py	/^def read_label_from_txt(label_path):$/;"	f
+read_label_from_xml	input_velodyne.py	/^def read_label_from_xml(label_path):$/;"	f
+read_labels	input_velodyne.py	/^def read_labels(label_path, label_type, calib_path=None, is_velo_cam=False, proj_velo=None):$/;"	f
+sphere_to_center	input_velodyne.py	/^def sphere_to_center(p_sphere, resolution=0.5, scale=4, min_value=np.array([0., -50., -4.5])):$/;"	f
+voxel_to_corner	input_velodyne.py	/^def voxel_to_corner(corner_vox, resolution, center):#TODO$/;"	f
+xml_path	input_velodyne.py	/^    xml_path = ".\/data\/2011_09_26\/2011_09_26_drive_0001_sync\/tracklet_labels.xml"$/;"	v
+OCC_FULLY	parse_xml.py	/^OCC_FULLY = 2$/;"	v
+OCC_PARTLY	parse_xml.py	/^OCC_PARTLY = 1$/;"	v
+OCC_UNSET	parse_xml.py	/^OCC_UNSET = 255  # -1 as uint8$/;"	v
+OCC_VISIBLE	parse_xml.py	/^OCC_VISIBLE = 0$/;"	v
+STATE_INTERP	parse_xml.py	/^STATE_INTERP = 1$/;"	v
+STATE_LABELED	parse_xml.py	/^STATE_LABELED = 2$/;"	v
+STATE_UNSET	parse_xml.py	/^STATE_UNSET = 0$/;"	v
+TRUNC_BEHIND_IMAGE	parse_xml.py	/^TRUNC_BEHIND_IMAGE = 3$/;"	v
+TRUNC_IN_IMAGE	parse_xml.py	/^TRUNC_IN_IMAGE = 0$/;"	v
+TRUNC_OUT_IMAGE	parse_xml.py	/^TRUNC_OUT_IMAGE = 2$/;"	v
+TRUNC_TRUNCATED	parse_xml.py	/^TRUNC_TRUNCATED = 1$/;"	v
+TRUNC_UNSET	parse_xml.py	/^TRUNC_UNSET = 255  # -1 as uint8, but in xml files the value '99' is used!$/;"	v
+Tracklet	parse_xml.py	/^class Tracklet(object):$/;"	c
+__init__	parse_xml.py	/^    def __init__(self):$/;"	m	class:Tracklet
+__iter__	parse_xml.py	/^    def __iter__(self):$/;"	m	class:Tracklet	file:
+__str__	parse_xml.py	/^    def __str__(self):$/;"	m	class:Tracklet	file:
+amtBorders	parse_xml.py	/^    amtBorders = None    # None (n x 3) float array  (amt_border_l \/ _r \/ _kf)$/;"	v	class:Tracklet
+amtOccs	parse_xml.py	/^    amtOccs = None    # None or (n x 2) float array  (amt_occlusion, amt_occlusion_kf)$/;"	v	class:Tracklet
+example	parse_xml.py	/^def example(kittiDir=None, drive=None):$/;"	f
+firstFrame	parse_xml.py	/^    firstFrame = None$/;"	v	class:Tracklet
+nFrames	parse_xml.py	/^    nFrames = None$/;"	v	class:Tracklet
+objectType	parse_xml.py	/^    objectType = None$/;"	v	class:Tracklet
+occFromText	parse_xml.py	/^occFromText = {'-1':OCC_UNSET, '0':OCC_VISIBLE, '1':OCC_PARTLY, '2':OCC_FULLY}$/;"	v
+occs	parse_xml.py	/^    occs = None    # n x 2 uint8 array  (occlusion, occlusion_kf)$/;"	v	class:Tracklet
+parseXML	parse_xml.py	/^def parseXML(trackletFile):$/;"	f
+rots	parse_xml.py	/^    rots = None    # n x 3 float array (x,y,z)$/;"	v	class:Tracklet
+size	parse_xml.py	/^    size = None  # len-3 float array: (height, width, length)$/;"	v	class:Tracklet
+stateFromText	parse_xml.py	/^stateFromText = {'0':STATE_UNSET, '1':STATE_INTERP, '2':STATE_LABELED}$/;"	v
+states	parse_xml.py	/^    states = None  # len-n uint8 array of states$/;"	v	class:Tracklet
+trans	parse_xml.py	/^    trans = None   # n x 3 float array (x,y,z)$/;"	v	class:Tracklet
+truncFromText	parse_xml.py	/^                  '2':TRUNC_OUT_IMAGE, '3': TRUNC_BEHIND_IMAGE}$/;"	v
+truncs	parse_xml.py	/^    truncs = None  # len-n uint8 array of truncation$/;"	v	class:Tracklet

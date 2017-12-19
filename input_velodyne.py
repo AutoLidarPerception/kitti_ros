@@ -10,8 +10,11 @@ import math
 import std_msgs.msg
 import sensor_msgs.point_cloud2 as pc2
 from sensor_msgs.msg import PointCloud2
+# detected box
+from visualization_msgs.msg import Marker
+from visualization_msgs.msg import MarkerArray
+# self-implemented XML parser
 from parse_xml import parseXML
-
 
 def load_pc_from_pcd(pcd_path):
     """Load PointCloud data from pcd file."""
@@ -50,7 +53,9 @@ def read_label_from_xml(label_path):
 
     # Returns:
         label_dic (dictionary): labels for one sequence.
-        size (list): Bounding Box Size. [l, w. h]?
+        size (list): Bounding Box Size. [h, w, l]
+        place (list): Bounding Box Position. [tx, ty, tz]
+        rotate (list): Bounding Box Rotation. [rx, ry, rz]
     """
     labels = parseXML(label_path)
     label_dic = {}
@@ -118,7 +123,9 @@ def create_publish_obj(obj, places, rotates, size):
     return obj
 
 def get_boxcorners(places, rotates, size):
-    """Create 8 corners of bounding box from bottom center."""
+    '''
+      Create 8 corners of bounding box from bottom center.
+    '''
     corners = []
     for place, rotate, sz in zip(places, rotates, size):
         x, y, z = place
@@ -151,7 +158,7 @@ def get_boxcorners(places, rotates, size):
     return np.array(corners)
 
 def publish_pc2(pc, obj):
-    """Publisher of PointCloud data"""
+    # Publisher of PointCloud data
     pub = rospy.Publisher("/points_raw", PointCloud2, queue_size=1000000)
     rospy.init_node("pc2_publisher")
     header = std_msgs.msg.Header()
@@ -164,6 +171,7 @@ def publish_pc2(pc, obj):
     header.stamp = rospy.Time.now()
     header.frame_id = "velodyne"
     points2 = pc2.create_cloud_xyz32(header, obj)
+    print obj
 
     r = rospy.Rate(0.1)
     while not rospy.is_shutdown():
@@ -204,9 +212,10 @@ def voxel_to_corner(corner_vox, resolution, center):#TODO
     return corners
 
 def read_labels(label_path, label_type, calib_path=None, is_velo_cam=False, proj_velo=None):
-    """Read labels from xml or txt file.
-    Original Label value is shifted about 0.27m from object center.
-    So need to revise the position of objects.
+    """
+     Read labels from xml or txt file.
+     Original Label value is shifted about 0.27m from object center.
+     So need to revise the position of objects.
     """
     if label_type == "txt": #TODO
         places, size, rotates = read_label_from_txt(label_path)
@@ -224,9 +233,11 @@ def read_labels(label_path, label_type, calib_path=None, is_velo_cam=False, proj
 
     elif label_type == "xml":
         bounding_boxes, size = read_label_from_xml(label_path)
-        places = bounding_boxes[30]["place"]
-        rotates = bounding_boxes[30]["rotate"][:, 2]
-        size = bounding_boxes[30]["size"]
+        #TODO dynamic index according to velodyne points file index
+        # need to check boundary
+        places = bounding_boxes[107]["place"]
+        rotates = bounding_boxes[107]["rotate"][:, 2]
+        size = bounding_boxes[107]["size"]
 
     return places, rotates, size
 
@@ -290,10 +301,18 @@ def process(velodyne_path, label_path=None, calib_path=None, dataformat="pcd", l
         proj_velo = proj_to_velo(calib)[:, :3]
 
     if label_path:
+        '''
+         read_label_from_xml()
+           +size (list): Bounding Box Size. [h, w, l]
+           +place (list): Bounding Box bottom center's Position. [tx, ty, tz]
+           +rotate (list): Bounding Box bottom center's Rotation. [rx, ry, rz]
+        '''
         places, rotates, size = read_labels(label_path, label_type, calib_path=calib_path, is_velo_cam=is_velo_cam, proj_velo=proj_velo)
-
+    # Create 8 corners of bounding box from bottom center
     corners = get_boxcorners(places, rotates, size)
-    print("################", len(pc))
+    print("# of Point Clouds", len(pc))
+
+    # Camera angle filters
     pc = filter_camera_angle(pc)
     # obj = []
     # obj = create_publish_obj(obj, places, rotates, size)
@@ -310,6 +329,8 @@ def process(velodyne_path, label_path=None, calib_path=None, dataformat="pcd", l
     bbox = sphere_to_center(a, resolution=0.25)
     print corners.shape
     # publish_pc2(pc, bbox.reshape(-1, 3))
+
+    # publish point clouds & publish boxes 8 corners
     publish_pc2(pc, corners.reshape(-1, 3))
 
 if __name__ == "__main__":
@@ -318,7 +339,7 @@ if __name__ == "__main__":
     # calib_path = "../data/training/calib/000012.txt"
     # process(pcd_path, label_path, calib_path=calib_path, dataformat="pcd")
 
-    bin_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/velodyne_points/data/0000000030.bin"
+    bin_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/velodyne_points/data/0000000107.bin"
     xml_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/tracklet_labels.xml"
     process(bin_path, xml_path, dataformat="bin", label_type="xml")
 
