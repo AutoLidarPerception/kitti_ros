@@ -10,8 +10,9 @@ rosrun rviz rviz -d kitti.rviz
 
 ### Thanks
 
-+ [[yukitsuji](https://github.com/yukitsuji)/**3D_CNN_tensorflow **](https://github.com/yukitsuji/3D_CNN_tensorflow)
++ [yukitsuji](https://github.com/yukitsuji)/[**3D_CNN_tensorflow** ](https://github.com/yukitsuji/3D_CNN_tensorflow)
 
 
-+ [[strawlab](https://github.com/strawlab)/**python-pcl **](https://github.com/strawlab/python-pcl)
++ [strawlab](https://github.com/strawlab)/[**python-pcl** ](https://github.com/strawlab/python-pcl)
+
 
