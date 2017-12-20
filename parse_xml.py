@@ -73,7 +73,7 @@ class Tracklet(object):
     """
 
     objectType = None
-    size = None  # len-3 float array: (height, width, length)
+    size = None    # len-3 float array: (height, width, length)
     firstFrame = None
     trans = None   # n x 3 float array (x,y,z)
     rots = None    # n x 3 float array (x,y,z)
@@ -117,10 +117,10 @@ class Tracklet(object):
 
 
 def parseXML(trackletFile):
-  r""" parse tracklet xml file and convert results to list of Tracklet objects
-
-  :param trackletFile: name of a tracklet xml file
-  :returns: list of Tracklet objects read from xml file
+  r"""
+    parse tracklet xml file and convert results to list of Tracklet objects
+      @param trackletFile: name of a tracklet xml file
+      @returns: list of Tracklet objects read from xml file
   """
 
   # convert tracklet XML data to a tree structure
