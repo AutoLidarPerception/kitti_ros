@@ -373,10 +373,15 @@ if __name__ == "__main__":
     pub_boxes = rospy.Publisher("/kitti/points_corners", PointCloud2, queue_size=1000000)
 
     idx = 0
-    # Rate(frequency)
-    r = rospy.Rate(0.2)
 
     for data in datas:
+        # CTRL+C exit
+        if rospy.is_shutdown():
+            print ""
+            print "###########"
+            print "[INFO] ros node had shutdown..."
+            sys.exit(0)
+
         pc = load_pc_from_bin(bin_path+data)
 
         img_name = os.path.splitext(data)[0]+".png"
@@ -390,6 +395,16 @@ if __name__ == "__main__":
 
         # Camera angle filters
         # pc = filter_camera_angle(pc)
+
+        # Image Window Setting
+        screen_res = 1280, 720
+        scale_width = screen_res[0] / img_file.shape[1]
+        scale_height = screen_res[1] / img_file.shape[0]
+        scale = min(scale_width, scale_height)
+        window_width = int(img_file.shape[1] * scale)
+        window_height = int(img_file.shape[0] * scale)*2
+        cv2.namedWindow(img_name, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(img_name, window_width, window_height)
 
         corners = None
         if idx in bounding_boxes.keys():
@@ -405,16 +420,11 @@ if __name__ == "__main__":
         if corners is not None:
             publish_bounding_boxes(pub_boxes, corners.reshape(-1, 3))
 
-        plt.figure(figsize=(16,6), frameon = False).patch.set_alpha(0)
-        plt.title(img_name)
-        plt.imshow(img_file)
-
-        # frequency control by r.sleep()
-        plt.pause(0.001)
-        r.sleep()
-
-        if rospy.is_shutdown():
-            print "ros node had shutdown..."
-            break
+        cv2.imshow(img_name, img_file)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
         idx += 1
+
+    print "###########"
+    print "[INFO] All data played..."
