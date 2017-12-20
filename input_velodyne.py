@@ -6,6 +6,8 @@ import numpy as np
 import cv2
 # python-pcl
 import pcl
+# for image show
+import matplotlib.pyplot as plt 
 import glob
 import math
 import std_msgs.msg
@@ -347,6 +349,8 @@ if __name__ == "__main__":
     bin_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/velodyne_points/data/"
     xml_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/tracklet_labels.xml"
     calib_path = None
+    # img_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/image_0[0-3]/data/"
+    img_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/image_02/data/"
 
     datas = []
     if os.path.isdir(bin_path):
@@ -369,10 +373,14 @@ if __name__ == "__main__":
     pub_boxes = rospy.Publisher("/kitti/points_corners", PointCloud2, queue_size=1000000)
 
     idx = 0
-    # Rate(double frequency)
-    r = rospy.Rate(1)
+    # Rate(frequency)
+    r = rospy.Rate(0.2)
+
     for data in datas:
         pc = load_pc_from_bin(bin_path+data)
+
+        img_name = os.path.splitext(data)[0]+".png"
+        img_file = cv2.imread(img_path+img_name)
 
         print("# of Point Clouds", len(pc))
 
@@ -381,7 +389,7 @@ if __name__ == "__main__":
             proj_velo = proj_to_velo(calib)[:, :3]
 
         # Camera angle filters
-        pc = filter_camera_angle(pc)
+        # pc = filter_camera_angle(pc)
 
         corners = None
         if idx in bounding_boxes.keys():
@@ -393,16 +401,20 @@ if __name__ == "__main__":
         else:
             print "no object in current frame: " + data
 
-        # while not rospy.is_shutdown():
-        # for i in range(50):
         publish_point_clouds(pub_points, pc)
         if corners is not None:
             publish_bounding_boxes(pub_boxes, corners.reshape(-1, 3))
+
+        plt.figure(figsize=(16,6), frameon = False).patch.set_alpha(0)
+        plt.title(img_name)
+        plt.imshow(img_file)
+
+        # frequency control by r.sleep()
+        plt.pause(0.001)
         r.sleep()
 
-        idx += 1
+        if rospy.is_shutdown():
+            print "ros node had shutdown..."
+            break
 
-    # pcd_path = "/home/katou01/download/training/velodyne/000410.bin"
-    # label_path = "/home/katou01/download/training/label_2/000410.txt"
-    # calib_path = "/home/katou01/download/training/calib/000410.txt"
-    # process(pcd_path, label_path, calib_path=calib_path, dataformat="bin", is_velo_cam=True)
+        idx += 1
