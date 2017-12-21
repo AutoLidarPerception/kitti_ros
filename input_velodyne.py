@@ -136,6 +136,7 @@ def get_boxcorners(places, rotates, size):
     for place, rotate, sz in zip(places, rotates, size):
         x, y, z = place
         h, w, l = sz
+        # print sz
         if l > 10:
             continue
 
@@ -159,6 +160,8 @@ def get_boxcorners(places, rotates, size):
             [x + l / 2., y + w / 2., z + h],
             [x - l / 2., y + w / 2., z + h],
         ])
+        # print "corner="
+        # print corner
 
         corner -= np.array([x, y, z])
 
@@ -170,6 +173,9 @@ def get_boxcorners(places, rotates, size):
 
         a = np.dot(corner, rotate_matrix.transpose())
         a += np.array([x, y, z])
+
+        # print "a="
+        # print a
         corners.append(a)
     return np.array(corners)
 
@@ -256,7 +262,7 @@ def publish_bounding_boxes(publisher, corners):
             marker.points.append(p[i])
 
         # box line width
-        marker.scale.x = 0.2
+        marker.scale.x = 0.1
         marker.color.a = 1.0
         marker.color.r = 0.0
         marker.color.g = 1.0
@@ -266,6 +272,41 @@ def publish_bounding_boxes(publisher, corners):
         msg_boxes.markers.append(marker)
 
     publisher.publish(msg_boxes)
+
+def publish_clusters(publisher, points, corners):
+    header = std_msgs.msg.Header()
+    header.stamp = rospy.Time.now()
+    header.frame_id = "velodyne"
+
+    clusters = []
+    num_boxes = len(corners)/8
+    init = False
+    for i in range(num_boxes):
+        corner = corners[i*8:(i+1)*8]
+        # print corner
+
+        clusters_idx = np.logical_and(
+                        (points[:,0]>min(corner[:,0])),
+                        (points[:,0]<max(corner[:,0])))
+        clusters_tmp = points[clusters_idx]
+        clusters_idx = np.logical_and(
+                        (clusters_tmp[:,1]>min(corner[:,1])),
+                        (clusters_tmp[:,1]<max(corner[:,1])))
+        clusters_tmp = clusters_tmp[clusters_idx]
+        clusters_idx = np.logical_and(
+                        (clusters_tmp[:,2]>min(corner[:,2])),
+                        (clusters_tmp[:,2]<max(corner[:,2])))
+        clusters_tmp = clusters_tmp[clusters_idx]
+        if not init:
+            clusters = clusters_tmp
+            init = True
+        else:
+            # np.append ==> 1D
+            clusters = np.append(clusters, clusters_tmp).reshape(-1, 4)
+            # print clusters
+
+    msg_clusters = pc2.create_cloud_xyz32(header, clusters[:,:3])
+    publisher.publish(msg_clusters)
 
 def raw_to_voxel(pc, resolution=0.50, x=(0, 90), y=(-50, 50), z=(-4.5, 5.5)):
     """Convert PointCloud2 to Voxel"""
@@ -451,6 +492,7 @@ if __name__ == "__main__":
     pub_vertex = rospy.Publisher("/kitti/points_corners", PointCloud2, queue_size=1000000)
     # Publisher of bounding box
     pub_boxes = rospy.Publisher("/kitti/objects", MarkerArray, queue_size=1000000)
+    pub_clusters = rospy.Publisher("/kitti/points_clusters", PointCloud2, queue_size=1000000)
 
     idx = 0
     for data in datas:
@@ -498,8 +540,9 @@ if __name__ == "__main__":
 
         publish_point_clouds(pub_points, pc)
         if corners is not None:
-            # publish_bounding_vertex(pub_vertex, corners.reshape(-1, 3))
+            publish_bounding_vertex(pub_vertex, corners.reshape(-1, 3))
             publish_bounding_boxes(pub_boxes, corners.reshape(-1, 3))
+            publish_clusters(pub_clusters, pc, corners.reshape(-1, 3))
 
         cv2.imshow(img_window, img_file)
         print "###########"
