@@ -8,6 +8,12 @@ rosrun rviz rviz -d kitti.rviz
 
 
 
+### References
+
++ [MarkMuth](https://github.com/MarkMuth)/[**QtKittiVisualizer **](https://github.com/MarkMuth/QtKittiVisualizer)
+
+
+
 ### Thanks
 
 + [yukitsuji](https://github.com/yukitsuji)/[**3D_CNN_tensorflow** ](https://github.com/yukitsuji/3D_CNN_tensorflow)
