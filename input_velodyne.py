@@ -16,6 +16,7 @@ from sensor_msgs.msg import PointCloud2
 # detected box
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
+from geometry_msgs.msg import Point
 # self-implemented XML parser
 from parse_xml import parseXML
 
@@ -138,15 +139,25 @@ def get_boxcorners(places, rotates, size):
         if l > 10:
             continue
 
+        # corner = np.array([
+        #     [x - l / 2., y - w / 2., z],        # 
+        #     [x + l / 2., y - w / 2., z],        # 
+        #     [x - l / 2., y + w / 2., z],
+        #     [x - l / 2., y - w / 2., z + h],
+        #     [x - l / 2., y + w / 2., z + h],
+        #     [x + l / 2., y + w / 2., z],
+        #     [x + l / 2., y - w / 2., z + h],
+        #     [x + l / 2., y + w / 2., z + h],
+        # ])
         corner = np.array([
-            [x - l / 2., y - w / 2., z],
-            [x + l / 2., y - w / 2., z],
+            [x - l / 2., y - w / 2., z],        # 
+            [x + l / 2., y - w / 2., z],        # 
+            [x + l / 2., y + w / 2., z],
             [x - l / 2., y + w / 2., z],
             [x - l / 2., y - w / 2., z + h],
-            [x - l / 2., y + w / 2., z + h],
-            [x + l / 2., y + w / 2., z],
             [x + l / 2., y - w / 2., z + h],
             [x + l / 2., y + w / 2., z + h],
+            [x - l / 2., y + w / 2., z + h],
         ])
 
         corner -= np.array([x, y, z])
@@ -173,12 +184,86 @@ def publish_point_clouds(publisher, points):
 
     publisher.publish(msg_points)
 
-def publish_bounding_boxes(publisher, boxes):
+def publish_bounding_vertex(publisher, corners):
     # Publish bounding boxes
     header = std_msgs.msg.Header()
     header.stamp = rospy.Time.now()
     header.frame_id = "velodyne"
-    msg_boxes = pc2.create_cloud_xyz32(header, boxes)
+    msg_boxes = pc2.create_cloud_xyz32(header, corners)
+    publisher.publish(msg_boxes)
+
+def publish_bounding_boxes(publisher, corners):
+    # Publish bounding boxes
+    msg_boxes = MarkerArray()
+    # no need for timestamp
+    # clear previous bounding boxes to avoid drift bounding boxes
+    header = std_msgs.msg.Header()
+    header.stamp = rospy.Time.now()
+    header.frame_id = "velodyne"
+    marker = Marker()
+    marker.header = header
+    marker.ns = "kitti_publisher"
+    marker.action = Marker.DELETEALL
+    msg_boxes.markers.append(marker)
+    publisher.publish(msg_boxes)
+
+    num_boxes = len(corners)/8
+    marker_id = 0
+    for i in range(num_boxes):
+        corner = corners[i*8:(i+1)*8]
+
+        header = std_msgs.msg.Header()
+        header.stamp = rospy.Time.now()
+        header.frame_id = "velodyne"
+
+        marker = Marker()
+        marker.header = header
+        marker.ns = "kitti_publisher"
+        # marker only identify by id
+        marker.id = marker_id; marker_id += 1
+        marker.type = Marker.LINE_LIST
+        marker.action = Marker.ADD
+
+        p = [Point() for _ in range(24)]
+        p[0].x =corner[0,0]; p[0].y =corner[0,1]; p[0].z =corner[0,2];
+        p[1].x =corner[1,0]; p[1].y =corner[1,1]; p[1].z =corner[1,2];
+        p[2].x =corner[1,0]; p[2].y =corner[1,1]; p[2].z =corner[1,2];
+        p[3].x =corner[2,0]; p[3].y =corner[2,1]; p[3].z =corner[2,2];
+        p[4].x =corner[2,0]; p[4].y =corner[2,1]; p[4].z =corner[2,2];
+        p[5].x =corner[3,0]; p[5].y =corner[3,1]; p[5].z =corner[3,2];
+        p[6].x =corner[3,0]; p[6].y =corner[3,1]; p[6].z =corner[3,2];
+        p[7].x =corner[0,0]; p[7].y =corner[0,1]; p[7].z =corner[0,2];
+
+        p[8].x =corner[4,0]; p[8].y =corner[4,1]; p[8].z =corner[4,2];
+        p[9].x =corner[5,0]; p[9].y =corner[5,1]; p[9].z =corner[5,2];
+        p[10].x=corner[5,0]; p[10].y=corner[5,1]; p[10].z=corner[5,2];
+        p[11].x=corner[6,0]; p[11].y=corner[6,1]; p[11].z=corner[6,2];
+        p[12].x=corner[6,0]; p[12].y=corner[6,1]; p[12].z=corner[6,2];
+        p[13].x=corner[7,0]; p[13].y=corner[7,1]; p[13].z=corner[7,2];
+        p[14].x=corner[7,0]; p[14].y=corner[7,1]; p[14].z=corner[7,2];
+        p[15].x=corner[4,0]; p[15].y=corner[4,1]; p[15].z=corner[4,2];
+
+        p[16].x=corner[0,0]; p[16].y=corner[0,1]; p[16].z=corner[0,2];
+        p[17].x=corner[4,0]; p[17].y=corner[4,1]; p[17].z=corner[4,2];
+        p[18].x=corner[1,0]; p[18].y=corner[1,1]; p[18].z=corner[1,2];
+        p[19].x=corner[5,0]; p[19].y=corner[5,1]; p[19].z=corner[5,2];
+        p[20].x=corner[2,0]; p[20].y=corner[2,1]; p[20].z=corner[2,2];
+        p[21].x=corner[6,0]; p[21].y=corner[6,1]; p[21].z=corner[6,2];
+        p[22].x=corner[3,0]; p[22].y=corner[3,1]; p[22].z=corner[3,2];
+        p[23].x=corner[7,0]; p[23].y=corner[7,1]; p[23].z=corner[7,2];
+
+        for i in range(24):
+            marker.points.append(p[i])
+
+        # box line width
+        marker.scale.x = 0.2
+        marker.color.a = 1.0
+        marker.color.r = 0.0
+        marker.color.g = 1.0
+        marker.color.b = 0.0
+        # A suitable lifetime to avoid be flash
+        # marker.lifetime = rospy.Duration(2);
+        msg_boxes.markers.append(marker)
 
     publisher.publish(msg_boxes)
 
@@ -340,17 +425,12 @@ def process(velodyne_path, label_path=None, calib_path=None, dataformat="pcd", l
     publish_pc2(pc, corners.reshape(-1, 3))
 
 if __name__ == "__main__":
-    # pcd_path = "../data/training/velodyne/000012.pcd"
-    # label_path = "../data/training/label_2/000012.txt"
-    # calib_path = "../data/training/calib/000012.txt"
-    # process(pcd_path, label_path, calib_path=calib_path, dataformat="pcd")
-
     pcd_path = None
-    bin_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/velodyne_points/data/"
+    bin_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/velodyne_points/data"
     xml_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/tracklet_labels.xml"
     calib_path = None
     # img_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/image_0[0-3]/data/"
-    img_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/image_02/data/"
+    img_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/image_02/data"
 
     datas = []
     if os.path.isdir(bin_path):
@@ -363,17 +443,16 @@ if __name__ == "__main__":
 
     # bounding_boxes[frame index] 
     bounding_boxes, tracklet_counter = read_label_from_xml(xml_path)
-    #TODO dynamic index according to velodyne points file index
-    # need to check boundary
 
     rospy.init_node("kitti_publisher")
     # Publisher of PointCloud data
     pub_points = rospy.Publisher("/kitti/points_raw", PointCloud2, queue_size=1000000)
     # Publisher of bounding box corner vertex
-    pub_boxes = rospy.Publisher("/kitti/points_corners", PointCloud2, queue_size=1000000)
+    pub_vertex = rospy.Publisher("/kitti/points_corners", PointCloud2, queue_size=1000000)
+    # Publisher of bounding box
+    pub_boxes = rospy.Publisher("/kitti/objects", MarkerArray, queue_size=1000000)
 
     idx = 0
-
     for data in datas:
         # CTRL+C exit
         if rospy.is_shutdown():
@@ -382,10 +461,11 @@ if __name__ == "__main__":
             print "[INFO] ros node had shutdown..."
             sys.exit(0)
 
-        pc = load_pc_from_bin(bin_path+data)
+        pc = load_pc_from_bin(bin_path+"/"+data)
 
         img_name = os.path.splitext(data)[0]+".png"
-        img_file = cv2.imread(img_path+img_name)
+        img_file = cv2.imread(img_path+"/"+img_name)
+        img_window = "Kitti"
 
         print("# of Point Clouds", len(pc))
 
@@ -403,24 +483,27 @@ if __name__ == "__main__":
         scale = min(scale_width, scale_height)
         window_width = int(img_file.shape[1] * scale)
         window_height = int(img_file.shape[0] * scale)*2
-        cv2.namedWindow(img_name, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(img_name, window_width, window_height)
+        cv2.namedWindow(img_window, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(img_window, window_width, window_height)
 
         corners = None
         if idx in bounding_boxes.keys():
             places = bounding_boxes[idx]["place"]
             rotates = bounding_boxes[idx]["rotate"][:, 2]
             size = bounding_boxes[idx]["size"]
-            # Create 8 corners of bounding box from ground center
+            # Create 8 corners of bounding box
             corners = get_boxcorners(places, rotates, size)
         else:
             print "no object in current frame: " + data
 
         publish_point_clouds(pub_points, pc)
         if corners is not None:
+            # publish_bounding_vertex(pub_vertex, corners.reshape(-1, 3))
             publish_bounding_boxes(pub_boxes, corners.reshape(-1, 3))
 
-        cv2.imshow(img_name, img_file)
+        cv2.imshow(img_window, img_file)
+        print "###########"
+        print "[INFO] Show image: ",img_name 
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 

@@ -88,29 +88,38 @@ datas	input_velodyne.py	/^    datas = []$/;"	v
 filter_camera_angle	input_velodyne.py	/^def filter_camera_angle(places):$/;"	f
 get_boxcorners	input_velodyne.py	/^def get_boxcorners(places, rotates, size):$/;"	f
 idx	input_velodyne.py	/^    idx = 0$/;"	v
+img_file	input_velodyne.py	/^        img_file = cv2.imread(img_path+img_name)$/;"	v
+img_name	input_velodyne.py	/^        img_name = os.path.splitext(data)[0]+".png"$/;"	v
+img_path	input_velodyne.py	/^    img_path = ".\/data\/2011_09_26\/2011_09_26_drive_0001_sync\/image_02\/data\/"$/;"	v
 load_pc_from_bin	input_velodyne.py	/^def load_pc_from_bin(bin_path):$/;"	f
 load_pc_from_pcd	input_velodyne.py	/^def load_pc_from_pcd(pcd_path):$/;"	f
-pc	input_velodyne.py	/^        pc = filter_camera_angle(pc)$/;"	v
 pc	input_velodyne.py	/^        pc = load_pc_from_bin(bin_path+data)$/;"	v
 pcd_path	input_velodyne.py	/^    pcd_path = None$/;"	v
 places	input_velodyne.py	/^            places = bounding_boxes[idx]["place"]$/;"	v
 process	input_velodyne.py	/^def process(velodyne_path, label_path=None, calib_path=None, dataformat="pcd", label_type="txt", is_velo_cam=False):$/;"	f
 proj_to_velo	input_velodyne.py	/^def proj_to_velo(calib_data):$/;"	f
 proj_velo	input_velodyne.py	/^            proj_velo = proj_to_velo(calib)[:, :3]$/;"	v
-pub_boxes	input_velodyne.py	/^    pub_boxes = rospy.Publisher("\/kitti\/points_corners", PointCloud2, queue_size=1000000)$/;"	v
+pub_boxes	input_velodyne.py	/^    pub_boxes = rospy.Publisher("\/kitti\/objects", MarkerArray, queue_size=1000000)$/;"	v
 pub_points	input_velodyne.py	/^    pub_points = rospy.Publisher("\/kitti\/points_raw", PointCloud2, queue_size=1000000)$/;"	v
-publish_bounding_boxes	input_velodyne.py	/^def publish_bounding_boxes(publisher, boxes):$/;"	f
+pub_vertex	input_velodyne.py	/^    pub_vertex = rospy.Publisher("\/kitti\/points_corners", PointCloud2, queue_size=1000000)$/;"	v
+publish_bounding_boxes	input_velodyne.py	/^def publish_bounding_boxes(publisher, corners):$/;"	f
+publish_bounding_vertex	input_velodyne.py	/^def publish_bounding_vertex(publisher, corners):$/;"	f
 publish_point_clouds	input_velodyne.py	/^def publish_point_clouds(publisher, points):$/;"	f
-r	input_velodyne.py	/^        r = rospy.Rate(0.1)$/;"	v
 raw_to_voxel	input_velodyne.py	/^def raw_to_voxel(pc, resolution=0.50, x=(0, 90), y=(-50, 50), z=(-4.5, 5.5)):$/;"	f
 read_calib_file	input_velodyne.py	/^def read_calib_file(calib_path):$/;"	f
 read_label_from_txt	input_velodyne.py	/^def read_label_from_txt(label_path):$/;"	f
 read_label_from_xml	input_velodyne.py	/^def read_label_from_xml(label_path):$/;"	f
 read_labels	input_velodyne.py	/^def read_labels(label_path, label_type, calib_path=None, is_velo_cam=False, proj_velo=None):$/;"	f
 rotates	input_velodyne.py	/^            rotates = bounding_boxes[idx]["rotate"][:, 2]$/;"	v
+scale	input_velodyne.py	/^        scale = min(scale_width, scale_height)$/;"	v
+scale_height	input_velodyne.py	/^        scale_height = screen_res[1] \/ img_file.shape[0]$/;"	v
+scale_width	input_velodyne.py	/^        scale_width = screen_res[0] \/ img_file.shape[1]$/;"	v
+screen_res	input_velodyne.py	/^        screen_res = 1280, 720$/;"	v
 size	input_velodyne.py	/^            size = bounding_boxes[idx]["size"]$/;"	v
 sphere_to_center	input_velodyne.py	/^def sphere_to_center(p_sphere, resolution=0.5, scale=4, min_value=np.array([0., -50., -4.5])):$/;"	f
 voxel_to_corner	input_velodyne.py	/^def voxel_to_corner(corner_vox, resolution, center):#TODO$/;"	f
+window_height	input_velodyne.py	/^        window_height = int(img_file.shape[0] * scale)*2$/;"	v
+window_width	input_velodyne.py	/^        window_width = int(img_file.shape[1] * scale)$/;"	v
 xml_path	input_velodyne.py	/^    xml_path = ".\/data\/2011_09_26\/2011_09_26_drive_0001_sync\/tracklet_labels.xml"$/;"	v
 OCC_FULLY	parse_xml.py	/^OCC_FULLY = 2$/;"	v
 OCC_PARTLY	parse_xml.py	/^OCC_PARTLY = 1$/;"	v

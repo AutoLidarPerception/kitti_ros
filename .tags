@@ -81,6 +81,9 @@ finalize	devkit/python/mailpy.py	/^    def finalize(self,success,benchmark,sha_k
 firstFrame	parse_xml.py	/^    firstFrame = None$/;"	v	class:Tracklet
 get_boxcorners	input_velodyne.py	/^def get_boxcorners(places, rotates, size):$/;"	f
 idx	input_velodyne.py	/^    idx = 0$/;"	v
+img_file	input_velodyne.py	/^        img_file = cv2.imread(img_path+img_name)$/;"	v
+img_name	input_velodyne.py	/^        img_name = os.path.splitext(data)[0]+".png"$/;"	v
+img_path	input_velodyne.py	/^    img_path = ".\/data\/2011_09_26\/2011_09_26_drive_0001_sync\/image_02\/data\/"$/;"	v
 indexes	devkit/python/munkres.py	/^        indexes = m.compute(cost_matrix)$/;"	v
 loadGroundtruth	devkit/python/evaluate_tracking.py	/^    def loadGroundtruth(self):$/;"	m	class:trackingEvaluation
 loadTracker	devkit/python/evaluate_tracking.py	/^    def loadTracker(self):$/;"	m	class:trackingEvaluation
@@ -100,7 +103,6 @@ occFromText	parse_xml.py	/^occFromText = {'-1':OCC_UNSET, '0':OCC_VISIBLE, '1':O
 occs	parse_xml.py	/^    occs = None    # n x 2 uint8 array  (occlusion, occlusion_kf)$/;"	v	class:Tracklet
 pad_matrix	devkit/python/munkres.py	/^    def pad_matrix(self, matrix, pad_value=0):$/;"	m	class:Munkres
 parseXML	parse_xml.py	/^def parseXML(trackletFile):$/;"	f
-pc	input_velodyne.py	/^        pc = filter_camera_angle(pc)$/;"	v
 pc	input_velodyne.py	/^        pc = load_pc_from_bin(bin_path+data)$/;"	v
 pcd_path	input_velodyne.py	/^    pcd_path = None$/;"	v
 places	input_velodyne.py	/^            places = bounding_boxes[idx]["place"]$/;"	v
@@ -110,11 +112,12 @@ process	input_velodyne.py	/^def process(velodyne_path, label_path=None, calib_pa
 proj_to_velo	input_velodyne.py	/^def proj_to_velo(calib_data):$/;"	f
 proj_velo	input_velodyne.py	/^            proj_velo = proj_to_velo(calib)[:, :3]$/;"	v
 projectToImage	devkit/matlab/projectToImage.m	/^function pts_2D = projectToImage(pts_3D, P)$/;"	f
-pub_boxes	input_velodyne.py	/^    pub_boxes = rospy.Publisher("\/kitti\/points_corners", PointCloud2, queue_size=1000000)$/;"	v
+pub_boxes	input_velodyne.py	/^    pub_boxes = rospy.Publisher("\/kitti\/objects", MarkerArray, queue_size=1000000)$/;"	v
 pub_points	input_velodyne.py	/^    pub_points = rospy.Publisher("\/kitti\/points_raw", PointCloud2, queue_size=1000000)$/;"	v
-publish_bounding_boxes	input_velodyne.py	/^def publish_bounding_boxes(publisher, boxes):$/;"	f
+pub_vertex	input_velodyne.py	/^    pub_vertex = rospy.Publisher("\/kitti\/points_corners", PointCloud2, queue_size=1000000)$/;"	v
+publish_bounding_boxes	input_velodyne.py	/^def publish_bounding_boxes(publisher, corners):$/;"	f
+publish_bounding_vertex	input_velodyne.py	/^def publish_bounding_vertex(publisher, corners):$/;"	f
 publish_point_clouds	input_velodyne.py	/^def publish_point_clouds(publisher, points):$/;"	f
-r	input_velodyne.py	/^        r = rospy.Rate(0.1)$/;"	v
 raw_to_voxel	input_velodyne.py	/^def raw_to_voxel(pc, resolution=0.50, x=(0, 90), y=(-50, 50), z=(-4.5, 5.5)):$/;"	f
 readCalibration	devkit/matlab/readCalibration.m	/^function P = readCalibration(calib_dir,seq_idx,cam)$/;"	f
 readLabels	devkit/matlab/readLabels.m	/^function tracklets = readLabels(label_dir,seq_idx)$/;"	f
@@ -126,6 +129,10 @@ result_sha	devkit/python/evaluate_tracking.py	/^    result_sha = sys.argv[1]$/;"
 rotates	input_velodyne.py	/^            rotates = bounding_boxes[idx]["rotate"][:, 2]$/;"	v
 rots	parse_xml.py	/^    rots = None    # n x 3 float array (x,y,z)$/;"	v	class:Tracklet
 saveToStats	devkit/python/evaluate_tracking.py	/^    def saveToStats(self):$/;"	m	class:trackingEvaluation
+scale	input_velodyne.py	/^        scale = min(scale_width, scale_height)$/;"	v
+scale_height	input_velodyne.py	/^        scale_height = screen_res[1] \/ img_file.shape[0]$/;"	v
+scale_width	input_velodyne.py	/^        scale_width = screen_res[0] \/ img_file.shape[1]$/;"	v
+screen_res	input_velodyne.py	/^        screen_res = 1280, 720$/;"	v
 size	input_velodyne.py	/^            size = bounding_boxes[idx]["size"]$/;"	v
 size	parse_xml.py	/^    size = None    # len-3 float array: (height, width, length)$/;"	v	class:Tracklet
 sphere_to_center	input_velodyne.py	/^def sphere_to_center(p_sphere, resolution=0.5, scale=4, min_value=np.array([0., -50., -4.5])):$/;"	f
@@ -140,6 +147,8 @@ truncFromText	parse_xml.py	/^                  '2':TRUNC_OUT_IMAGE, '3': TRUNC_B
 truncs	parse_xml.py	/^    truncs = None  # len-n uint8 array of truncation$/;"	v	class:Tracklet
 visualization	devkit/matlab/visualization.m	/^function varargout = visualization(mode,image_dir,varargin)$/;"	f
 voxel_to_corner	input_velodyne.py	/^def voxel_to_corner(corner_vox, resolution, center):#TODO$/;"	f
+window_height	input_velodyne.py	/^        window_height = int(img_file.shape[0] * scale)*2$/;"	v
+window_width	input_velodyne.py	/^        window_width = int(img_file.shape[1] * scale)$/;"	v
 wrapToPi	devkit/matlab/writeLabels.m	/^function alpha = wrapToPi(alpha)$/;"	f
 writeLabels	devkit/matlab/writeLabels.m	/^function writeLabels(tracklets,label_dir, seq_idx)$/;"	f
 x	devkit/python/munkres.py	/^            x = cost_matrix[r][c]$/;"	v
