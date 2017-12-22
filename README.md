@@ -10,7 +10,7 @@ rosrun rviz rviz -d kitti.rviz
 
 ### References
 
-+ [MarkMuth](https://github.com/MarkMuth)/[**QtKittiVisualizer **](https://github.com/MarkMuth/QtKittiVisualizer)
++ [MarkMuth](https://github.com/MarkMuth)/[**QtKittiVisualizer**](https://github.com/MarkMuth/QtKittiVisualizer)
 
 
 

@@ -466,6 +466,12 @@ def process(velodyne_path, label_path=None, calib_path=None, dataformat="pcd", l
     publish_pc2(pc, corners.reshape(-1, 3))
 
 if __name__ == "__main__":
+    # default observation mode
+    mode = "observation"
+    if len(sys.argv)>1:
+        print mode
+        mode = sys.argv[1]
+
     pcd_path = None
     bin_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/velodyne_points/data"
     xml_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/tracklet_labels.xml"
@@ -494,6 +500,8 @@ if __name__ == "__main__":
     pub_boxes = rospy.Publisher("/kitti/objects", MarkerArray, queue_size=1000000)
     pub_clusters = rospy.Publisher("/kitti/points_clusters", PointCloud2, queue_size=1000000)
 
+    fps = rospy.Rate(1)
+
     idx = 0
     for data in datas:
         # CTRL+C exit
@@ -504,29 +512,28 @@ if __name__ == "__main__":
             sys.exit(0)
 
         pc = load_pc_from_bin(bin_path+"/"+data)
-
-        img_name = os.path.splitext(data)[0]+".png"
-        img_file = cv2.imread(img_path+"/"+img_name)
-        img_window = "Kitti"
-
         print("# of Point Clouds", len(pc))
 
         if calib_path:
             calib = read_calib_file(calib_path)
             proj_velo = proj_to_velo(calib)[:, :3]
 
+        if mode!="play":
+            img_name = os.path.splitext(data)[0]+".png"
+            img_file = cv2.imread(img_path+"/"+img_name)
+            img_window = "Kitti"
+            # Image Window Setting
+            screen_res = 1280, 720
+            scale_width = screen_res[0] / img_file.shape[1]
+            scale_height = screen_res[1] / img_file.shape[0]
+            scale = min(scale_width, scale_height)
+            window_width = int(img_file.shape[1] * scale)
+            window_height = int(img_file.shape[0] * scale)*2
+            cv2.namedWindow(img_window, cv2.WINDOW_NORMAL)
+            cv2.resizeWindow(img_window, window_width, window_height)
+
         # Camera angle filters
         # pc = filter_camera_angle(pc)
-
-        # Image Window Setting
-        screen_res = 1280, 720
-        scale_width = screen_res[0] / img_file.shape[1]
-        scale_height = screen_res[1] / img_file.shape[0]
-        scale = min(scale_width, scale_height)
-        window_width = int(img_file.shape[1] * scale)
-        window_height = int(img_file.shape[0] * scale)*2
-        cv2.namedWindow(img_window, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(img_window, window_width, window_height)
 
         corners = None
         if idx in bounding_boxes.keys():
@@ -544,11 +551,14 @@ if __name__ == "__main__":
             publish_bounding_boxes(pub_boxes, corners.reshape(-1, 3))
             publish_clusters(pub_clusters, pc, corners.reshape(-1, 3))
 
-        cv2.imshow(img_window, img_file)
-        print "###########"
-        print "[INFO] Show image: ",img_name 
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        if mode!="play":
+            cv2.imshow(img_window, img_file)
+            print "###########"
+            print "[INFO] Show image: ",img_name 
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+        else:
+            fps.sleep()
 
         idx += 1
 
