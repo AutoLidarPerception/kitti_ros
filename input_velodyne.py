@@ -17,6 +17,8 @@ from sensor_msgs.msg import PointCloud2
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
 from geometry_msgs.msg import Point
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge, CvBridgeError
 # self-implemented XML parser
 from parse_xml import parseXML
 
@@ -180,7 +182,7 @@ def get_boxcorners(places, rotates, size):
     return np.array(corners)
 
 def publish_point_clouds(publisher, points):
-    # Publish point clouds and bounding boxes
+    # Publish point clouds
     header = std_msgs.msg.Header()
     header.stamp = rospy.Time.now()
     header.frame_id = "velodyne"
@@ -189,6 +191,21 @@ def publish_point_clouds(publisher, points):
     msg_points = pc2.create_cloud_xyz32(header, points[:, :3])
 
     publisher.publish(msg_points)
+
+def publish_image(publisher, img):
+    msg_img = Image()
+    try:
+        msg_img = CvBridge().cv2_to_imgmsg(img, "bgr8")
+    except CvBridgeError as e:
+        print(e)
+        return
+
+    header = std_msgs.msg.Header()
+    header.stamp = rospy.Time.now()
+    header.frame_id = "velodyne"
+    msg_img.header = header
+
+    publisher.publish(msg_img)
 
 def publish_bounding_vertex(publisher, corners):
     # Publish bounding boxes
@@ -494,6 +511,7 @@ if __name__ == "__main__":
     rospy.init_node("kitti_publisher")
     # Publisher of PointCloud data
     pub_points = rospy.Publisher("/kitti/points_raw", PointCloud2, queue_size=1000000)
+    pub_img = rospy.Publisher("/kitti/img", Image, queue_size=1000000)
     # Publisher of bounding box corner vertex
     pub_vertex = rospy.Publisher("/kitti/points_corners", PointCloud2, queue_size=1000000)
     # Publisher of bounding box
@@ -518,19 +536,18 @@ if __name__ == "__main__":
             calib = read_calib_file(calib_path)
             proj_velo = proj_to_velo(calib)[:, :3]
 
-        if mode!="play":
-            img_name = os.path.splitext(data)[0]+".png"
-            img_file = cv2.imread(img_path+"/"+img_name)
-            img_window = "Kitti"
-            # Image Window Setting
-            screen_res = 1280, 720
-            scale_width = screen_res[0] / img_file.shape[1]
-            scale_height = screen_res[1] / img_file.shape[0]
-            scale = min(scale_width, scale_height)
-            window_width = int(img_file.shape[1] * scale)
-            window_height = int(img_file.shape[0] * scale)*2
-            cv2.namedWindow(img_window, cv2.WINDOW_NORMAL)
-            cv2.resizeWindow(img_window, window_width, window_height)
+        img_name = os.path.splitext(data)[0]+".png"
+        img_file = cv2.imread(img_path+"/"+img_name)
+        img_window = "Kitti"
+        # Image Window Setting
+        screen_res = 1280, 720
+        scale_width = screen_res[0] / img_file.shape[1]
+        scale_height = screen_res[1] / img_file.shape[0]
+        scale = min(scale_width, scale_height)
+        window_width = int(img_file.shape[1] * scale)
+        window_height = int(img_file.shape[0] * scale)*2
+        cv2.namedWindow(img_window, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(img_window, window_width, window_height)
 
         # Camera angle filters
         # pc = filter_camera_angle(pc)
@@ -546,19 +563,23 @@ if __name__ == "__main__":
             print "no object in current frame: " + data
 
         publish_point_clouds(pub_points, pc)
+
         if corners is not None:
             publish_bounding_vertex(pub_vertex, corners.reshape(-1, 3))
             publish_bounding_boxes(pub_boxes, corners.reshape(-1, 3))
             publish_clusters(pub_clusters, pc, corners.reshape(-1, 3))
 
+        publish_image(pub_img, img_file)
+        cv2.imshow(img_window, img_file)
+        print "###########"
+        print "[INFO] Show image: ",img_name
         if mode!="play":
-            cv2.imshow(img_window, img_file)
-            print "###########"
-            print "[INFO] Show image: ",img_name 
             cv2.waitKey(0)
             cv2.destroyAllWindows()
         else:
+            cv2.waitKey(1)
             fps.sleep()
+            cv2.destroyAllWindows()
 
         idx += 1
 
