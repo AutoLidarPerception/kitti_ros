@@ -215,6 +215,29 @@ def publish_bounding_vertex(publisher, corners):
     msg_boxes = pc2.create_cloud_xyz32(header, corners)
     publisher.publish(msg_boxes)
 
+def publish_img_bb(publisher, corners):
+    # one bounding box
+    corner = corners[0:8]
+    # image bounding box (min_x,min_y,min_z)-->(max_x,max_y,max_z)
+    min_x = min(corner[:,0])
+    max_x = max(corner[:,0])
+    min_y = min(corner[:,1])
+    max_y = max(corner[:,1])
+    min_z = min(corner[:,2])
+    max_z = max(corner[:,2])
+
+    img_bb = np.array([
+                [min_x, min_y, min_z],
+                [max_x, max_y, max_z]
+            ])
+
+    header = std_msgs.msg.Header()
+    header.stamp = rospy.Time.now()
+    header.frame_id = "velodyne"
+
+    msg_img_bb = pc2.create_cloud_xyz32(header, img_bb)
+    publisher.publish(msg_img_bb)
+
 def publish_bounding_boxes(publisher, corners):
     # Publish bounding boxes
     msg_boxes = MarkerArray()
@@ -514,6 +537,7 @@ if __name__ == "__main__":
     pub_img = rospy.Publisher("/kitti/img", Image, queue_size=1000000)
     # Publisher of bounding box corner vertex
     pub_vertex = rospy.Publisher("/kitti/points_corners", PointCloud2, queue_size=1000000)
+    pub_img_bb = rospy.Publisher("/kitti/objects_bb", PointCloud2, queue_size=1000000)
     # Publisher of bounding box
     pub_boxes = rospy.Publisher("/kitti/objects", MarkerArray, queue_size=1000000)
     pub_clusters = rospy.Publisher("/kitti/points_clusters", PointCloud2, queue_size=1000000)
@@ -538,16 +562,17 @@ if __name__ == "__main__":
 
         img_name = os.path.splitext(data)[0]+".png"
         img_file = cv2.imread(img_path+"/"+img_name)
-        img_window = "Kitti"
-        # Image Window Setting
-        screen_res = 1280, 720
-        scale_width = screen_res[0] / img_file.shape[1]
-        scale_height = screen_res[1] / img_file.shape[0]
-        scale = min(scale_width, scale_height)
-        window_width = int(img_file.shape[1] * scale)
-        window_height = int(img_file.shape[0] * scale)*2
-        cv2.namedWindow(img_window, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(img_window, window_width, window_height)
+        if mode!="play":
+            img_window = "Kitti"
+            # Image Window Setting
+            screen_res = 1280, 720
+            scale_width = screen_res[0] / img_file.shape[1]
+            scale_height = screen_res[1] / img_file.shape[0]
+            scale = min(scale_width, scale_height)
+            window_width = int(img_file.shape[1] * scale)
+            window_height = int(img_file.shape[0] * scale)*2
+            cv2.namedWindow(img_window, cv2.WINDOW_NORMAL)
+            cv2.resizeWindow(img_window, window_width, window_height)
 
         # Camera angle filters
         # pc = filter_camera_angle(pc)
@@ -566,20 +591,19 @@ if __name__ == "__main__":
 
         if corners is not None:
             publish_bounding_vertex(pub_vertex, corners.reshape(-1, 3))
+            publish_img_bb(pub_img_bb, corners.reshape(-1, 3))
             publish_bounding_boxes(pub_boxes, corners.reshape(-1, 3))
             publish_clusters(pub_clusters, pc, corners.reshape(-1, 3))
 
         publish_image(pub_img, img_file)
-        cv2.imshow(img_window, img_file)
         print "###########"
         print "[INFO] Show image: ",img_name
         if mode!="play":
+            cv2.imshow(img_window, img_file)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
         else:
-            cv2.waitKey(1)
             fps.sleep()
-            cv2.destroyAllWindows()
 
         idx += 1
 
