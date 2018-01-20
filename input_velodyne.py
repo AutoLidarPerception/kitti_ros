@@ -10,6 +10,9 @@ import pcl
 import matplotlib.pyplot as plt 
 import glob
 import math
+
+from sensor_msgs.msg import PointCloud2, PointField
+
 import std_msgs.msg
 import sensor_msgs.point_cloud2 as pc2
 from sensor_msgs.msg import PointCloud2
@@ -22,13 +25,14 @@ from cv_bridge import CvBridge, CvBridgeError
 # self-implemented XML parser
 from parse_xml import parseXML
 
+
+# Load PointCloud data from pcd file
 def load_pc_from_pcd(pcd_path):
-    # Load PointCloud data from pcd file
     p = pcl.load(pcd_path)
     return np.array(list(p), dtype=np.float32)
 
+# Load PointCloud data from bin file [X, Y, Z, I]
 def load_pc_from_bin(bin_path):
-    # Load PointCloud data from bin file [X, Y, Z, I]
     obj = np.fromfile(bin_path, dtype=np.float32).reshape(-1, 4)
     return obj
 
@@ -76,10 +80,12 @@ def read_label_from_xml(label_path):
         obj_type = label.objectType
         for index, place, rotate in zip(range(first_frame, first_frame+nframes), label.trans, label.rots):
             if index in label_dic.keys():
+                # array merged using vertical stack
                 label_dic[index]["place"] = np.vstack((label_dic[index]["place"], place))
                 label_dic[index]["size"] = np.vstack((label_dic[index]["size"], np.array(size)))
                 label_dic[index]["rotate"] = np.vstack((label_dic[index]["rotate"], rotate))
             else:
+                # inited as array
                 label_dic[index] = {}
                 label_dic[index]["place"] = place
                 label_dic[index]["rotate"] = rotate
@@ -108,12 +114,11 @@ def proj_to_velo(calib_data):
     inv_velo_to_cam = np.linalg.pinv(velo_to_cam[:, :3])
     return np.dot(inv_velo_to_cam, inv_rect)
 
-
-def filter_camera_angle(places):
-    # Filter camera angles for KiTTI Datasets
-    bool_in = np.logical_and((places[:, 1] < places[:, 0] - 0.27), (-places[:, 1] < places[:, 0] - 0.27))
+# Filter camera angles for KiTTI Datasets
+def filter_by_camera_angle(pc):
+    bool_in = np.logical_and((pc[:, 1] < pc[:, 0] - 0.27), (-pc[:, 1] < pc[:, 0] - 0.27))
     # bool_in = np.logical_and((places[:, 1] < places[:, 0]), (-places[:, 1] < places[:, 0]))
-    return places[bool_in]
+    return pc[bool_in]
 
 def create_publish_obj(obj, places, rotates, size):
     """Create object of correct data for publisher"""
@@ -132,29 +137,20 @@ def create_publish_obj(obj, places, rotates, size):
                     obj.append((a, b, c))
     return obj
 
-def get_boxcorners(places, rotates, size):
+def get_boxcorners(places, rotates_z, size):
     # Create 8 corners of bounding box from ground center
-    corners = []
-    for place, rotate, sz in zip(places, rotates, size):
-        x, y, z = place
-        h, w, l = sz
-        # print sz
+    if rotates_z.size <= 0:
+        return None
+    elif rotates_z.size == 1:
+        x, y, z = places
+        h, w, l = size
+        rotate_z = rotates_z
         if l > 10:
-            continue
+            return None
 
-        # corner = np.array([
-        #     [x - l / 2., y - w / 2., z],        # 
-        #     [x + l / 2., y - w / 2., z],        # 
-        #     [x - l / 2., y + w / 2., z],
-        #     [x - l / 2., y - w / 2., z + h],
-        #     [x - l / 2., y + w / 2., z + h],
-        #     [x + l / 2., y + w / 2., z],
-        #     [x + l / 2., y - w / 2., z + h],
-        #     [x + l / 2., y + w / 2., z + h],
-        # ])
         corner = np.array([
-            [x - l / 2., y - w / 2., z],        # 
-            [x + l / 2., y - w / 2., z],        # 
+            [x - l / 2., y - w / 2., z],        #
+            [x + l / 2., y - w / 2., z],        #
             [x + l / 2., y + w / 2., z],
             [x - l / 2., y + w / 2., z],
             [x - l / 2., y - w / 2., z + h],
@@ -162,35 +158,65 @@ def get_boxcorners(places, rotates, size):
             [x + l / 2., y + w / 2., z + h],
             [x - l / 2., y + w / 2., z + h],
         ])
-        # print "corner="
-        # print corner
 
         corner -= np.array([x, y, z])
 
         rotate_matrix = np.array([
-            [np.cos(rotate), -np.sin(rotate), 0],
-            [np.sin(rotate), np.cos(rotate), 0],
+            [np.cos(rotate_z), -np.sin(rotate_z), 0],
+            [np.sin(rotate_z), np.cos(rotate_z), 0],
             [0, 0, 1]
         ])
 
         a = np.dot(corner, rotate_matrix.transpose())
         a += np.array([x, y, z])
 
-        # print "a="
-        # print a
-        corners.append(a)
-    return np.array(corners)
+        return np.array(a)
+    # rotates_z may be only one dimension
+    else:
+        corners = []
+        for place, rotate_z, sz in zip(places, rotates_z, size):
+            x, y, z = place
+            h, w, l = sz
+            if l > 10:
+                continue
+
+            corner = np.array([
+                [x - l / 2., y - w / 2., z],        #
+                [x + l / 2., y - w / 2., z],        #
+                [x + l / 2., y + w / 2., z],
+                [x - l / 2., y + w / 2., z],
+                [x - l / 2., y - w / 2., z + h],
+                [x + l / 2., y - w / 2., z + h],
+                [x + l / 2., y + w / 2., z + h],
+                [x - l / 2., y + w / 2., z + h],
+            ])
+
+            corner -= np.array([x, y, z])
+
+            rotate_matrix = np.array([
+                [np.cos(rotate_z), -np.sin(rotate_z), 0],
+                [np.sin(rotate_z), np.cos(rotate_z), 0],
+                [0, 0, 1]
+            ])
+
+            a = np.dot(corner, rotate_matrix.transpose())
+            a += np.array([x, y, z])
+            corners.append(a)
+        # all corners
+        return np.array(corners)
 
 def publish_point_clouds(publisher, points):
     # Publish point clouds
     header = std_msgs.msg.Header()
     header.stamp = rospy.Time.now()
     header.frame_id = "velodyne"
-    # points.shape = (?, 4)
-    # points[:, :3] ==> (?, 0...2)
-    msg_points = pc2.create_cloud_xyz32(header, points[:, :3])
 
-    publisher.publish(msg_points)
+    fields = [PointField('x', 0, PointField.FLOAT32, 1),
+              PointField('y', 4, PointField.FLOAT32, 1),
+              PointField('z', 8, PointField.FLOAT32, 1),
+              PointField('i', 12, PointField.FLOAT32, 1)]
+    cloud = pc2.create_cloud(header, fields, points)
+    publisher.publish(cloud)
 
 def publish_image(publisher, img):
     msg_img = Image()
@@ -266,7 +292,7 @@ def publish_bounding_boxes(publisher, corners):
         marker.header = header
         marker.ns = "kitti_publisher"
         # marker only identify by id
-        marker.id = marker_id; marker_id += 1
+        marker.id = marker_id; marker_id += 1;
         marker.type = Marker.LINE_LIST
         marker.action = Marker.ADD
 
@@ -511,13 +537,17 @@ if __name__ == "__main__":
     if len(sys.argv)>1:
         print mode
         mode = sys.argv[1]
+    # path = "./data/2011_09_26/2011_09_26_drive_0001_sync"
+    # path = "./data/2011_09_26/2011_09_26_drive_0005_sync"
+    # path = "./data/2011_09_26/2011_09_26_drive_0060_sync"
+    path = "./data/2011_09_26/2011_09_26_drive_0117_sync"
 
     pcd_path = None
-    bin_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/velodyne_points/data"
-    xml_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/tracklet_labels.xml"
+    bin_path = path + "/" + "velodyne_points/data"
+    xml_path = path + "/" + "tracklet_labels.xml"
     calib_path = None
-    # img_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/image_0[0-3]/data/"
-    img_path = "./data/2011_09_26/2011_09_26_drive_0001_sync/image_02/data"
+    # img_path = path + "/" + "image_0[0-3]/data/"
+    img_path = path + "/" + "image_02/data"
 
     datas = []
     if os.path.isdir(bin_path):
@@ -542,7 +572,8 @@ if __name__ == "__main__":
     pub_boxes = rospy.Publisher("/kitti/objects", MarkerArray, queue_size=1000000)
     pub_clusters = rospy.Publisher("/kitti/points_clusters", PointCloud2, queue_size=1000000)
 
-    fps = rospy.Rate(1)
+    fps = rospy.Rate(10)
+    # fps = rospy.Rate(5)
 
     idx = 0
     for data in datas:
@@ -554,7 +585,7 @@ if __name__ == "__main__":
             sys.exit(0)
 
         pc = load_pc_from_bin(bin_path+"/"+data)
-        print("# of Point Clouds", len(pc))
+        print("# of Point Clouds", pc.size)
 
         if calib_path:
             calib = read_calib_file(calib_path)
@@ -575,15 +606,20 @@ if __name__ == "__main__":
             cv2.resizeWindow(img_window, window_width, window_height)
 
         # Camera angle filters
-        # pc = filter_camera_angle(pc)
+        pc = filter_by_camera_angle(pc)
 
         corners = None
         if idx in bounding_boxes.keys():
             places = bounding_boxes[idx]["place"]
-            rotates = bounding_boxes[idx]["rotate"][:, 2]
+            # avoid IndexError: too many indices for array
+            if bounding_boxes[idx]["rotate"].ndim>1:
+                rotates_z = bounding_boxes[idx]["rotate"][:, 2]
+            else:
+                rotates_z = bounding_boxes[idx]["rotate"][2]
+
             size = bounding_boxes[idx]["size"]
             # Create 8 corners of bounding box
-            corners = get_boxcorners(places, rotates, size)
+            corners = get_boxcorners(places, rotates_z, size)
         else:
             print "no object in current frame: " + data
 
