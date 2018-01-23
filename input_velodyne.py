@@ -11,6 +11,13 @@ import matplotlib.pyplot as plt
 import glob
 import math
 
+'''
+    sudo apt-get install python-evdev
+'''
+import thread
+from evdev import InputDevice
+from select import select
+
 from sensor_msgs.msg import PointCloud2, PointField
 
 import std_msgs.msg
@@ -24,7 +31,6 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 # self-implemented XML parser
 from parse_xml import parseXML
-
 
 # Load PointCloud data from pcd file
 def load_pc_from_pcd(pcd_path):
@@ -214,7 +220,7 @@ def publish_point_clouds(publisher, points):
     fields = [PointField('x', 0, PointField.FLOAT32, 1),
               PointField('y', 4, PointField.FLOAT32, 1),
               PointField('z', 8, PointField.FLOAT32, 1),
-              PointField('i', 12, PointField.FLOAT32, 1)]
+              PointField('intensity', 12, PointField.FLOAT32, 1)]
     cloud = pc2.create_cloud(header, fields, points)
     publisher.publish(cloud)
 
@@ -531,16 +537,48 @@ def process(velodyne_path, label_path=None, calib_path=None, dataformat="pcd", l
     # reshape to 3 columns
     publish_pc2(pc, corners.reshape(-1, 3))
 
+KEY_IDLE=0
+KEY_SPACE=57
+KEY_LEFT=105
+KEY_RIGHT=106
+NEXT_FRAME=KEY_RIGHT
+LAST_FRAME=KEY_LEFT
+KEY_VAL=KEY_IDLE
+
+def on_keyboard():
+    global KEY_VAL
+    dev = InputDevice('/dev/input/event3')
+    while True:
+        select([dev], [], [])
+        for event in dev.read():
+            if (event.value!=0) and (event.code!=0):
+                # KEY_VAL will keep until next pressed
+                KEY_VAL = event.code
+                # print "Key: %s Status: %s" % (event.code, "pressed" if event.value else "release")
+            # print "KEY_VAL: ",KEY_VAL
+
 if __name__ == "__main__":
     # default observation mode
     mode = "observation"
     if len(sys.argv)>1:
-        print mode
+        # print mode
         mode = sys.argv[1]
+
+    playing = False
+    # open a keyboard listen thread on play mode
+    # if mode == "play":
+    if True:
+        try:
+            thread.start_new_thread(on_keyboard, ())
+        except Exception, e:
+            print str(e)
+            print "Error: unable to start keyboard listen thread."
+        playing = True
+
     # path = "./data/2011_09_26/2011_09_26_drive_0001_sync"
-    # path = "./data/2011_09_26/2011_09_26_drive_0005_sync"
+    path = "./data/2011_09_26/2011_09_26_drive_0005_sync"
     # path = "./data/2011_09_26/2011_09_26_drive_0060_sync"
-    path = "./data/2011_09_26/2011_09_26_drive_0117_sync"
+    # path = "./data/2011_09_26/2011_09_26_drive_0117_sync"
 
     pcd_path = None
     bin_path = path + "/" + "velodyne_points/data"
@@ -573,10 +611,11 @@ if __name__ == "__main__":
     pub_clusters = rospy.Publisher("/kitti/points_clusters", PointCloud2, queue_size=1000000)
 
     fps = rospy.Rate(10)
-    # fps = rospy.Rate(5)
+    # fps = rospy.Rate(3)
 
     idx = 0
-    for data in datas:
+    # support circular access ...-2,-1,0,1,2...
+    while idx < len(datas):
         # CTRL+C exit
         if rospy.is_shutdown():
             print ""
@@ -584,16 +623,16 @@ if __name__ == "__main__":
             print "[INFO] ros node had shutdown..."
             sys.exit(0)
 
-        pc = load_pc_from_bin(bin_path+"/"+data)
+        pc = load_pc_from_bin(bin_path+"/"+datas[idx])
         print("# of Point Clouds", pc.size)
 
         if calib_path:
             calib = read_calib_file(calib_path)
             proj_velo = proj_to_velo(calib)[:, :3]
 
-        img_name = os.path.splitext(data)[0]+".png"
+        img_name = os.path.splitext(datas[idx])[0]+".png"
         img_file = cv2.imread(img_path+"/"+img_name)
-        if mode!="play":
+        if mode != "play":
             img_window = "Kitti"
             # Image Window Setting
             screen_res = 1280, 720
@@ -621,7 +660,7 @@ if __name__ == "__main__":
             # Create 8 corners of bounding box
             corners = get_boxcorners(places, rotates_z, size)
         else:
-            print "no object in current frame: " + data
+            print "no object in current frame: " + datas[idx]
 
         publish_point_clouds(pub_points, pc)
 
@@ -634,14 +673,45 @@ if __name__ == "__main__":
         publish_image(pub_img, img_file)
         print "###########"
         print "[INFO] Show image: ",img_name
-        if mode!="play":
+        if mode != "play":
             cv2.imshow(img_window, img_file)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
+            idx += 1
         else:
             fps.sleep()
-
-        idx += 1
+            # Keyboard control logic
+            if playing:
+                if KEY_VAL==KEY_SPACE:
+                    playing = False
+                    KEY_VAL = KEY_IDLE
+                else:
+                    idx += 1
+            while not playing:
+                if KEY_VAL==NEXT_FRAME:
+                    idx += 1
+                    if idx >= len(datas):
+                        idx = 0
+                    KEY_VAL = KEY_IDLE
+                    break
+                elif KEY_VAL==LAST_FRAME:
+                    idx -= 1
+                    if idx < 0:
+                        idx = 0
+                    KEY_VAL = KEY_IDLE
+                    break
+                elif KEY_VAL==KEY_SPACE:
+                    playing = True
+                    idx += 1
+                    KEY_VAL = KEY_IDLE
+                    break
+                else:
+                    # CTRL+C exit
+                    if rospy.is_shutdown():
+                        print ""
+                        print "###########"
+                        print "[INFO] ros node had shutdown..."
+                        sys.exit(-1)
 
     print "###########"
     print "[INFO] All data played..."
