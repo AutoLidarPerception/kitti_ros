@@ -545,40 +545,33 @@ NEXT_FRAME=KEY_RIGHT
 LAST_FRAME=KEY_LEFT
 KEY_VAL=KEY_IDLE
 
-def on_keyboard():
+def on_keyboard(name_dev):
     global KEY_VAL
-    dev = InputDevice('/dev/input/event3')
+    dev = InputDevice(name_dev)
     while True:
         select([dev], [], [])
         for event in dev.read():
             if (event.value!=0) and (event.code!=0):
                 # KEY_VAL will keep until next pressed
                 KEY_VAL = event.code
-                # print "Key: %s Status: %s" % (event.code, "pressed" if event.value else "release")
-            # print "KEY_VAL: ",KEY_VAL
+
 
 if __name__ == "__main__":
-    # default observation mode
-    mode = "observation"
-    if len(sys.argv)>1:
-        # print mode
-        mode = sys.argv[1]
+    # ROS parameters
+    mode = rospy.get_param("/kitti_player/mode", "observation")
+    fps = rospy.get_param("/kitti_player/fps", 10)
+    path = rospy.get_param("/kitti_player/kitti_data_path", "")
+    keyboard_file = rospy.get_param("/kitti_player/keyboard_file", "/dev/input/event3")
 
     playing = False
     # open a keyboard listen thread on play mode
-    # if mode == "play":
-    if True:
+    if mode == "play":
         try:
-            thread.start_new_thread(on_keyboard, ())
+            thread.start_new_thread(on_keyboard, (keyboard_file,))
         except Exception, e:
             print str(e)
             print "Error: unable to start keyboard listen thread."
         playing = True
-
-    # path = "./data/2011_09_26/2011_09_26_drive_0001_sync"
-    path = "./data/2011_09_26/2011_09_26_drive_0005_sync"
-    # path = "./data/2011_09_26/2011_09_26_drive_0060_sync"
-    # path = "./data/2011_09_26/2011_09_26_drive_0117_sync"
 
     pcd_path = None
     bin_path = path + "/" + "velodyne_points/data"
@@ -599,7 +592,7 @@ if __name__ == "__main__":
     # bounding_boxes[frame index] 
     bounding_boxes, tracklet_counter = read_label_from_xml(xml_path)
 
-    rospy.init_node("kitti_publisher")
+    rospy.init_node("kitti_player")
     # Publisher of PointCloud data
     pub_points = rospy.Publisher("/kitti/points_raw", PointCloud2, queue_size=1000000)
     pub_img = rospy.Publisher("/kitti/img", Image, queue_size=1000000)
@@ -610,8 +603,7 @@ if __name__ == "__main__":
     pub_boxes = rospy.Publisher("/kitti/objects", MarkerArray, queue_size=1000000)
     pub_clusters = rospy.Publisher("/kitti/points_clusters", PointCloud2, queue_size=1000000)
 
-    fps = rospy.Rate(10)
-    # fps = rospy.Rate(3)
+    fps = rospy.Rate(fps)
 
     idx = 0
     # support circular access ...-2,-1,0,1,2...
