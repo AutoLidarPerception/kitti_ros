@@ -5,10 +5,10 @@
     <!-- default 10Hz, the same as LiDAR -->
     <arg name="fps" default="10" />
 
-    <!--<arg name="path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0001_sync"/>-->
+    <!--<arg name="kitti_data_path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0001_sync"/>-->
     <arg name="kitti_data_path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0005_sync"/>
-    <!--<arg name="path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0060_sync"/>-->
-    <!--<arg name="path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0117_sync"/>-->
+    <!--<arg name="kitti_data_path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0060_sync"/>-->
+    <!--<arg name="kitti_data_path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0117_sync"/>-->
 
     <!-- Keyboard listener is based on Linux input subsystem -->
     <arg name="keyboard_file" default="/dev/input/event3" />

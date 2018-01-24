@@ -571,7 +571,6 @@ if __name__ == "__main__":
         except Exception, e:
             print str(e)
             print "Error: unable to start keyboard listen thread."
-        playing = True
 
     pcd_path = None
     bin_path = path + "/" + "velodyne_points/data"
