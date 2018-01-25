@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Grid1
         - /PointCloud1
         - /BoundingBox1
         - /BoundingBox1/MergedClusters1
@@ -280,7 +279,7 @@ Visualization Manager:
           Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 251.688324
+          Max Intensity: 251.8125
           Min Color: 0; 0; 0
           Min Intensity: 0
           Name: Clusters
@@ -352,19 +351,19 @@ Visualization Manager:
     - Class: rviz/Group
       Displays:
         - Class: rviz/MarkerArray
-          Enabled: false
+          Enabled: true
           Marker Topic: /kitti/objects
           Name: GroundTruths
           Namespaces:
             {}
           Queue Size: 100
-          Value: false
+          Value: true
         - Class: rviz/MarkerArray
           Enabled: true
           Marker Topic: /lidartld/markers_clustered
           Name: Clusters
           Namespaces:
-            lidartld: true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/MarkerArray
@@ -372,10 +371,10 @@ Visualization Manager:
           Marker Topic: /lidartld/merged_markers_clustered
           Name: MergedClusters
           Namespaces:
-            idartld: true
+            {}
           Queue Size: 100
           Value: true
-      Enabled: true
+      Enabled: false
       Name: BoundingBox
     - Class: rviz/Axes
       Enabled: true
@@ -408,25 +407,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 107.147392
+      Distance: 130.04953
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 29.9372501
-        Y: 10.4608049
-        Z: -13.3583879
+        X: 78.608757
+        Y: 11.3092232
+        Z: -56.4178238
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.719797075
+      Pitch: 0.724796534
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.31543493
+      Yaw: 3.3954289
     Saved: ~
 Window Geometry:
   BirdEyeView:
