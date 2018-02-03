@@ -569,8 +569,8 @@ if __name__ == "__main__":
     # ROS parameters
     mode = rospy.get_param("/kitti_player/mode", "observation")
     fps = rospy.get_param("/kitti_player/fps", 10)
-    path = rospy.get_param("/kitti_player/kitti_data_path", "")
     keyboard_file = rospy.get_param("/kitti_player/keyboard_file", "/dev/input/event3")
+    dataset_file = rospy.get_param("/kitti_player/dataset_file", "/dev/input/event3")
 
     playing = False
     # open a keyboard listen thread on play mode
@@ -581,26 +581,7 @@ if __name__ == "__main__":
             print str(e)
             print "Error: unable to start keyboard listen thread."
 
-    pcd_path = None
-    bin_path = path + "/" + "velodyne_points/data"
-    xml_path = path + "/" + "tracklet_labels.xml"
-    calib_path = None
-    # img_path = path + "/" + "image_0[0-3]/data/"
-    img_path = path + "/" + "image_02/data"
-
-    datas = []
-    if os.path.isdir(bin_path):
-        for lists in os.listdir(bin_path):
-            if os.path.isdir(lists):
-                continue
-            else:
-                datas.append(lists)
-    datas.sort()
-
-    # bounding_boxes[frame index] 
-    bounding_boxes, tracklet_counter = read_label_from_xml(xml_path)
-
-    rospy.init_node("kitti_player")
+    rospy.init_node("kitti_training_player")
     # Publisher of Kitti raw data: point cloud & image & ground truth
     pub_points = rospy.Publisher("/kitti/points_raw", PointCloud2, queue_size=1000000)
     pub_img = rospy.Publisher("/kitti/img_raw", Image, queue_size=1000000)
@@ -621,76 +602,78 @@ if __name__ == "__main__":
 
     fps = rospy.Rate(fps)
 
-    idx = 0
-    # support circular access ...-2,-1,0,1,2...
-    while idx < len(datas):
-        # CTRL+C exit
-        if rospy.is_shutdown():
-            print ""
-            print "###########"
-            print "[INFO] ros node had shutdown..."
-            sys.exit(0)
+    datasets = open(dataset_file, 'r')
 
-        pc = load_pc_from_bin(bin_path+"/"+datas[idx])
-        print("# of Point Clouds", pc.size)
+    for dataset_path in datasets.readlines():
+        # filter out "#" as comment
+        dataset_path = dataset_path.strip().lstrip()
+        if dataset_path[0] == '#':
+            continue
 
-        if calib_path:
-            calib = read_calib_file(calib_path)
-            proj_velo = proj_to_velo(calib)[:, :3]
+        bin_path = dataset_path + "/" + "velodyne_points/data"
+        xml_path = dataset_path + "/" + "tracklet_labels.xml"
+        # img_path = path + "/" + "image_0[0-3]/data/"
+        img_path = dataset_path + "/" + "image_02/data"
 
-        img_name = os.path.splitext(datas[idx])[0]+".png"
-        img_file = cv2.imread(img_path+"/"+img_name)
-        if mode != "play":
-            img_window = "Kitti"
-            # Image Window Setting
-            screen_res = 1280, 720
-            scale_width = screen_res[0] / img_file.shape[1]
-            scale_height = screen_res[1] / img_file.shape[0]
-            scale = min(scale_width, scale_height)
-            window_width = int(img_file.shape[1] * scale)
-            window_height = int(img_file.shape[0] * scale)*2
-            cv2.namedWindow(img_window, cv2.WINDOW_NORMAL)
-            cv2.resizeWindow(img_window, window_width, window_height)
+        datas = []
+        if os.path.isdir(bin_path):
+            for lists in os.listdir(bin_path):
+                if os.path.isdir(lists):
+                    continue
+                else:
+                    datas.append(lists)
+        datas.sort()
 
-        # Camera angle filters
-        pc = filter_by_camera_angle(pc)
+        # bounding_boxes[frame index]
+        bounding_boxes, tracklet_counter = read_label_from_xml(xml_path)
 
-        corners = None
-        if idx in bounding_boxes.keys():
-            places = bounding_boxes[idx]["place"]
-            # avoid IndexError: too many indices for array
-            if bounding_boxes[idx]["rotate"].ndim > 1:
-                rotates_z = bounding_boxes[idx]["rotate"][:, 2]
+        idx = 0
+        # support circular access ...-2,-1,0,1,2...
+        while idx < len(datas):
+            # CTRL+C exit
+            if rospy.is_shutdown():
+                print ""
+                print "###########"
+                print "[INFO] ros node had shutdown..."
+                sys.exit(0)
+
+            pc = load_pc_from_bin(bin_path+"/"+datas[idx])
+            print("# of Point Clouds", pc.size)
+
+            img_name = os.path.splitext(datas[idx])[0]+".png"
+            img_file = cv2.imread(img_path+"/"+img_name)
+
+            # Camera angle filters
+            pc = filter_by_camera_angle(pc)
+
+            corners = None
+            if idx in bounding_boxes.keys():
+                places = bounding_boxes[idx]["place"]
+                # avoid IndexError: too many indices for array
+                if bounding_boxes[idx]["rotate"].ndim > 1:
+                    rotates_z = bounding_boxes[idx]["rotate"][:, 2]
+                else:
+                    rotates_z = bounding_boxes[idx]["rotate"][2]
+                size = bounding_boxes[idx]["size"]
+
+                # Create 8 corners of bounding box
+                corners = get_boxcorners(places, rotates_z, size)
             else:
-                rotates_z = bounding_boxes[idx]["rotate"][2]
-            size = bounding_boxes[idx]["size"]
+                print "no object in current frame: " + datas[idx]
+                # publish empty message
+                publish_ground_truth_boxes(ground_truth_pub_, header_, None, None, None)
+                # publish_object_markers(object_marker_pub_, header_, None)
 
-            # Create 8 corners of bounding box
-            corners = get_boxcorners(places, rotates_z, size)
-        else:
-            print "no object in current frame: " + datas[idx]
-            # publish empty message
-            publish_ground_truth_boxes(ground_truth_pub_, header_, None, None, None)
-            # publish_object_markers(object_marker_pub_, header_, None)
+            publish_raw_clouds(pub_points, header_, pc)
 
-        publish_raw_clouds(pub_points, header_, pc)
+            if corners is not None:
+                publish_ground_truth_boxes(ground_truth_pub_, header_, places, rotates_z, size)
+                publish_ground_truth_markers(object_marker_pub_, header_, corners.reshape(-1, 3))
 
-        if corners is not None:
-            publish_ground_truth_boxes(ground_truth_pub_, header_, places, rotates_z, size)
-            # publish_bounding_vertex(pub_vertex, header_, corners.reshape(-1, 3))
-            # publish_img_bb(pub_img_bb, header_, corners.reshape(-1, 3))
-            publish_ground_truth_markers(object_marker_pub_, header_, corners.reshape(-1, 3))
-            # publish_clusters(pub_clusters, header_, pc, corners.reshape(-1, 3))
+            publish_raw_image(pub_img, header_, img_file)
+            print "###########"
+            print "[INFO] Show image: ",img_name
 
-        publish_raw_image(pub_img, header_, img_file)
-        print "###########"
-        print "[INFO] Show image: ",img_name
-        if mode != "play":
-            cv2.imshow(img_window, img_file)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-            idx += 1
-        else:
             fps.sleep()
             # Keyboard control logic
             if playing:
@@ -725,5 +708,8 @@ if __name__ == "__main__":
                         print "[INFO] ros node had shutdown..."
                         sys.exit(-1)
 
+        print "###########"
+        print "[INFO] played dataset: ",dataset_path
+
     print "###########"
-    print "[INFO] All data played..."
+    print "[INFO] All datasets played..."

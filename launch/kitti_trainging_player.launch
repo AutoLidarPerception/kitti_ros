@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+    <arg name="mode" default="play" />
+    <!-- default 10Hz, the same as LiDAR -->
+    <arg name="fps" default="10" />
+    <!-- for learning node training -->
+    <!--<arg name="fps" default="0.5" />-->
+
+    <arg name="dataset_file" default="$(find kitti_ros)/data/training_datasets.txt"/>
+
+    <!-- Keyboard listener is based on Linux input subsystem -->
+    <arg name="keyboard_file" default="/dev/input/event3" />
+
+    <!-- load -->
+    <node name="kitti_player" pkg="kitti_ros" type="kitti_training_player.py" output="screen">
+        <param name="keyboard_file" value="$(arg keyboard_file)"/>
+        <param name="mode" value="$(arg mode)"/>
+        <param name="fps" value="$(arg fps)"/>
+        <param name="dataset_file" value="$(arg dataset_file)"/>
+    </node>
+
+
+</launch>
