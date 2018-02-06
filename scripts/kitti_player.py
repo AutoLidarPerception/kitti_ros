@@ -258,18 +258,22 @@ def publish_img_bb(publisher, header, corners):
     msg_img_bb = pc2.create_cloud_xyz32(header, img_bb)
     publisher.publish(msg_img_bb)
 
+# Publish bounding boxes
 def publish_ground_truth_markers(publisher, header, corners):
-    # Publish bounding boxes
-    msg_boxes = MarkerArray()
-    # no need for timestamp
     # clear previous bounding boxes to avoid drift bounding boxes
+    msg_boxes = MarkerArray()
     marker = Marker()
     marker.header = header
-    marker.ns = "kitti_publisher"
+    marker.ns = "kitti_ros"
     marker.action = Marker.DELETEALL
+    marker.id = 0
     msg_boxes.markers.append(marker)
     publisher.publish(msg_boxes)
 
+    if corners is None:
+        return None
+
+    msg_boxes = MarkerArray()
     num_boxes = len(corners)/8
     marker_id = 0
     for i in range(num_boxes):
@@ -277,11 +281,11 @@ def publish_ground_truth_markers(publisher, header, corners):
 
         marker = Marker()
         marker.header = header
-        marker.ns = "kitti_publisher"
+        marker.ns = "kitti_ros"
+        marker.action = Marker.ADD
+        marker.type = Marker.LINE_LIST
         # marker only identify by id
         marker.id = marker_id; marker_id += 1;
-        marker.type = Marker.LINE_LIST
-        marker.action = Marker.ADD
 
         p = [Point() for _ in range(24)]
         p[0].x =corner[0,0]; p[0].y =corner[0,1]; p[0].z =corner[0,2];
@@ -325,6 +329,7 @@ def publish_ground_truth_markers(publisher, header, corners):
         msg_boxes.markers.append(marker)
 
     publisher.publish(msg_boxes)
+    clear_marker_size = num_boxes
 
 def publish_clusters(publisher, header, points, corners):
     clusters = []
@@ -569,8 +574,9 @@ if __name__ == "__main__":
     # ROS parameters
     mode = rospy.get_param("/kitti_player/mode", "observation")
     fps = rospy.get_param("/kitti_player/fps", 10)
-    path = rospy.get_param("/kitti_player/kitti_data_path", "")
     keyboard_file = rospy.get_param("/kitti_player/keyboard_file", "/dev/input/event3")
+    filter_by_camera_angle_ = rospy.get_param("/kitti_player/filter_by_camera_angle", True)
+    path = rospy.get_param("/kitti_player/kitti_data_path", "")
 
     playing = False
     # open a keyboard listen thread on play mode
@@ -580,25 +586,6 @@ if __name__ == "__main__":
         except Exception, e:
             print str(e)
             print "Error: unable to start keyboard listen thread."
-
-    pcd_path = None
-    bin_path = path + "/" + "velodyne_points/data"
-    xml_path = path + "/" + "tracklet_labels.xml"
-    calib_path = None
-    # img_path = path + "/" + "image_0[0-3]/data/"
-    img_path = path + "/" + "image_02/data"
-
-    datas = []
-    if os.path.isdir(bin_path):
-        for lists in os.listdir(bin_path):
-            if os.path.isdir(lists):
-                continue
-            else:
-                datas.append(lists)
-    datas.sort()
-
-    # bounding_boxes[frame index] 
-    bounding_boxes, tracklet_counter = read_label_from_xml(xml_path)
 
     rospy.init_node("kitti_player")
     # Publisher of Kitti raw data: point cloud & image & ground truth
@@ -621,6 +608,25 @@ if __name__ == "__main__":
 
     fps = rospy.Rate(fps)
 
+    pcd_path = None
+    bin_path = path + "/" + "velodyne_points/data"
+    xml_path = path + "/" + "tracklet_labels.xml"
+    calib_path = None
+    # img_path = path + "/" + "image_0[0-3]/data/"
+    img_path = path + "/" + "image_02/data"
+
+    datas = []
+    if os.path.isdir(bin_path):
+        for lists in os.listdir(bin_path):
+            if os.path.isdir(lists):
+                continue
+            else:
+                datas.append(lists)
+    datas.sort()
+
+    # bounding_boxes[frame index] 
+    bounding_boxes, tracklet_counter = read_label_from_xml(xml_path)
+
     idx = 0
     # support circular access ...-2,-1,0,1,2...
     while idx < len(datas):
@@ -631,7 +637,7 @@ if __name__ == "__main__":
             print "[INFO] ros node had shutdown..."
             sys.exit(0)
 
-        pc = load_pc_from_bin(bin_path+"/"+datas[idx])
+        pc = load_pc_from_bin(bin_path + "/" + datas[idx])
         print("# of Point Clouds", pc.size)
 
         if calib_path:
@@ -653,8 +659,12 @@ if __name__ == "__main__":
             cv2.resizeWindow(img_window, window_width, window_height)
 
         # Camera angle filters
-        pc = filter_by_camera_angle(pc)
+        if filter_by_camera_angle_:
+            pc = filter_by_camera_angle(pc)
 
+        places = None
+        rotates_z = None
+        size = None
         corners = None
         if idx in bounding_boxes.keys():
             places = bounding_boxes[idx]["place"]
@@ -667,11 +677,6 @@ if __name__ == "__main__":
 
             # Create 8 corners of bounding box
             corners = get_boxcorners(places, rotates_z, size)
-        else:
-            print "no object in current frame: " + datas[idx]
-            # publish empty message
-            publish_ground_truth_boxes(ground_truth_pub_, header_, None, None, None)
-            # publish_object_markers(object_marker_pub_, header_, None)
 
         publish_raw_clouds(pub_points, header_, pc)
 
@@ -681,7 +686,16 @@ if __name__ == "__main__":
             # publish_img_bb(pub_img_bb, header_, corners.reshape(-1, 3))
             publish_ground_truth_markers(object_marker_pub_, header_, corners.reshape(-1, 3))
             # publish_clusters(pub_clusters, header_, pc, corners.reshape(-1, 3))
+        else:
+            print "no object in current frame: " + datas[idx]
+            # publish empty message
+            publish_ground_truth_boxes(ground_truth_pub_, header_, None, None, None)
+            publish_ground_truth_markers(object_marker_pub_, header_, None)
 
+
+        """
+            publish RGB image
+        """
         publish_raw_image(pub_img, header_, img_file)
         print "###########"
         print "[INFO] Show image: ",img_name
@@ -708,8 +722,8 @@ if __name__ == "__main__":
                     break
                 elif KEY_VAL==LAST_FRAME:
                     idx -= 1
-                    if idx < 0:
-                        idx = 0
+                    # if idx < 0:
+                    #     idx = 0
                     KEY_VAL = KEY_IDLE
                     break
                 elif KEY_VAL==KEY_SPACE:

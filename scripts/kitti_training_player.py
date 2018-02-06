@@ -258,17 +258,22 @@ def publish_img_bb(publisher, header, corners):
     msg_img_bb = pc2.create_cloud_xyz32(header, img_bb)
     publisher.publish(msg_img_bb)
 
+# Publish bounding boxes
 def publish_ground_truth_markers(publisher, header, corners):
-    # Publish bounding boxes
-    msg_boxes = MarkerArray()
-    # no need for timestamp
     # clear previous bounding boxes to avoid drift bounding boxes
+    msg_boxes = MarkerArray()
     marker = Marker()
     marker.header = header
-    marker.ns = "kitti_publisher"
+    marker.ns = "kitti_ros"
     marker.action = Marker.DELETEALL
+    marker.id = 0
     msg_boxes.markers.append(marker)
     publisher.publish(msg_boxes)
+
+    if corners is None:
+        return None
+
+    msg_boxes = MarkerArray()
 
     num_boxes = len(corners)/8
     marker_id = 0
@@ -570,6 +575,7 @@ if __name__ == "__main__":
     mode = rospy.get_param("/kitti_player/mode", "observation")
     fps = rospy.get_param("/kitti_player/fps", 10)
     keyboard_file = rospy.get_param("/kitti_player/keyboard_file", "/dev/input/event3")
+    filter_by_camera_angle_ = rospy.get_param("/kitti_player/filter_by_camera_angle", True)
     dataset_file = rospy.get_param("/kitti_player/dataset_file", "/dev/input/event3")
 
     playing = False
@@ -607,7 +613,9 @@ if __name__ == "__main__":
     for dataset_path in datasets.readlines():
         # filter out "#" as comment
         dataset_path = dataset_path.strip().lstrip()
-        if dataset_path[0] == '#':
+        if len(dataset_path) <= 0:
+            continue
+        if dataset_path[0] != '/':
             continue
 
         bin_path = dataset_path + "/" + "velodyne_points/data"
@@ -644,7 +652,8 @@ if __name__ == "__main__":
             img_file = cv2.imread(img_path+"/"+img_name)
 
             # Camera angle filters
-            pc = filter_by_camera_angle(pc)
+            if filter_by_camera_angle_:
+                pc = filter_by_camera_angle(pc)
 
             corners = None
             if idx in bounding_boxes.keys():
@@ -658,17 +667,17 @@ if __name__ == "__main__":
 
                 # Create 8 corners of bounding box
                 corners = get_boxcorners(places, rotates_z, size)
-            else:
-                print "no object in current frame: " + datas[idx]
-                # publish empty message
-                publish_ground_truth_boxes(ground_truth_pub_, header_, None, None, None)
-                # publish_object_markers(object_marker_pub_, header_, None)
 
             publish_raw_clouds(pub_points, header_, pc)
 
             if corners is not None:
                 publish_ground_truth_boxes(ground_truth_pub_, header_, places, rotates_z, size)
                 publish_ground_truth_markers(object_marker_pub_, header_, corners.reshape(-1, 3))
+            else:
+                print "no object in current frame: " + datas[idx]
+                # publish empty message
+                publish_ground_truth_boxes(ground_truth_pub_, header_, None, None, None)
+                publish_ground_truth_markers(object_marker_pub_, header_, None)
 
             publish_raw_image(pub_img, header_, img_file)
             print "###########"

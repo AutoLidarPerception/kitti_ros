@@ -11,12 +11,17 @@
     <!--<arg name="kitti_data_path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0060_sync"/>-->
     <!-- positives: 82 -->
     <!--<arg name="kitti_data_path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0017_sync"/>-->
+    <!--<arg name="kitti_data_path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0018_sync"/>-->
 
     <!-- move scenary-->
     <!--<arg name="kitti_data_path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0001_sync"/>-->
     <!--<arg name="kitti_data_path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0005_sync"/>-->
+    <arg name="kitti_data_path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0027_sync"/>
     <!-- without ground truth -->
-    <arg name="kitti_data_path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0117_sync"/>
+    <!--<arg name="kitti_data_path" default="$(find kitti_ros)/data/2011_09_26/2011_09_26_drive_0117_sync"/>-->
+
+    <!--<arg name="filter_by_camera_angle" default="true"/>-->
+    <arg name="filter_by_camera_angle" default="false"/>
 
     <!-- Keyboard listener is based on Linux input subsystem -->
     <arg name="keyboard_file" default="/dev/input/event3" />

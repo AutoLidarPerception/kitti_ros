@@ -9,6 +9,9 @@
 
     <arg name="dataset_file" default="$(find kitti_ros)/data/training_datasets.txt"/>
 
+    <arg name="filter_by_camera_angle" default="true"/>
+    <!--<arg name="filter_by_camera_angle" default="false"/>-->
+
     <!-- Keyboard listener is based on Linux input subsystem -->
     <arg name="keyboard_file" default="/dev/input/event3" />
 
@@ -17,6 +20,7 @@
         <param name="keyboard_file" value="$(arg keyboard_file)"/>
         <param name="mode" value="$(arg mode)"/>
         <param name="fps" value="$(arg fps)"/>
+        <param name="filter_by_camera_angle" value="$(arg filter_by_camera_angle)"/>
         <param name="dataset_file" value="$(arg dataset_file)"/>
     </node>
 
