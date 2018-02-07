@@ -39,8 +39,8 @@
         <!-- []  means no forground objects -->
         <!--<rosparam param="care_objects">[ ]</rosparam>-->
         <!--<rosparam param="care_objects">['Car','Van','Truck','Pedestrian','Sitter','Cyclist','Tram','Misc']</rosparam>-->
-        <rosparam param="care_objects">['Pedestrian']</rosparam>
-        <!--<rosparam param="care_objects">['Car', 'Van', 'Truck']</rosparam>-->
+        <!--<rosparam param="care_objects">['Pedestrian']</rosparam>-->
+        <rosparam param="care_objects">['Car', 'Van', 'Truck']</rosparam>
 
         <param name="filter_by_camera_angle" value="$(arg filter_by_camera_angle)"/>
     </node>

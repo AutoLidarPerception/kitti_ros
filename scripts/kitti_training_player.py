@@ -18,6 +18,7 @@ import cv2
 
 from kitti import read_label_from_xml
 from kitti import load_pc_from_bin
+from kitti import get_boxcorners
 from kitti import filter_by_camera_angle
 from kitti import publish_raw_clouds
 from kitti import publish_ground_truth_boxes
