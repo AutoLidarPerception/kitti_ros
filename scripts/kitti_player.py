@@ -15,6 +15,8 @@ from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
 
 import cv2
+import datetime as dt
+import time
 
 from kitti import read_label_from_xml
 from kitti import load_pc_from_bin
@@ -89,10 +91,21 @@ if __name__ == "__main__":
 
     pcd_path = None
     bin_path = path + "/" + "velodyne_points/data"
+    timestamp_file = path + "/" + "velodyne_points/timestamps.txt"
     xml_path = path + "/" + "tracklet_labels.xml"
     calib_path = None
     # img_path = path + "/" + "image_0[0-3]/data/"
     img_path = path + "/" + "image_02/data"
+
+    timestamps = []
+    with open(timestamp_file, 'r') as f:
+        for line in f.readlines():
+            # NB: datetime only supports microseconds, but KITTI timestamps
+            # give nanoseconds, so need to truncate last 4 characters to
+            # get rid of \n (counts as 1) and extra 3 digits
+            t = dt.datetime.strptime(line[:-4], '%Y-%m-%d %H:%M:%S.%f')
+            # t = dt.datetime.strptime(line, '%Y-%m-%d %H:%M:%S.%f')
+            timestamps.append(t)
 
     datas = []
     if os.path.isdir(bin_path):
@@ -117,7 +130,12 @@ if __name__ == "__main__":
             sys.exit(0)
 
         pc = load_pc_from_bin(bin_path + "/" + datas[idx])
-        print("# of Point Clouds", pc.size)
+        print "\n[",timestamps[idx],"]","# of Point Clouds:", pc.size
+
+        ##TODO timestamp
+        #header_.stamp = rospy.Time.from_sec(timestamps[idx].total_seconds())
+        # print (timestamps[idx] - dt.datetime(1970,1,1)).total_seconds()
+        header_.stamp = rospy.Time.from_sec((timestamps[idx] - dt.datetime(1970,1,1)).total_seconds())
 
         if calib_path:
             calib = read_calib_file(calib_path)

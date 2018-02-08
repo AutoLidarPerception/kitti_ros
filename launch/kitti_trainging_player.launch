@@ -7,9 +7,9 @@
     <arg name="mode" default="play" />
 
     <!-- default 10Hz, the same as LiDAR -->
-    <arg name="fps" default="10" />
+    <!--<arg name="fps" default="10" />-->
     <!-- for learning node training -->
-    <!--<arg name="fps" default="0.5" />-->
+    <arg name="fps" default="0.5" />
 
     <arg name="dataset_file" default="$(find kitti_ros)/data/training_datasets.txt"/>
 
