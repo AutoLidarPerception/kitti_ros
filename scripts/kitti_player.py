@@ -13,15 +13,23 @@ from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseArray
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
+import tf
+from tf import transformations as trans
 
 import cv2
 import datetime as dt
-import time
+# import time
+# from collections import namedtuple
+import numpy as np
+
+import pykitti.utils as kitti
+# import transform.transform as transform
 
 from kitti import read_label_from_xml
 from kitti import load_pc_from_bin
 from kitti import filter_by_camera_angle
 from kitti import get_boxcorners
+from kitti import read_calib_file
 from kitti import publish_raw_clouds
 from kitti import publish_ground_truth_boxes
 from kitti import publish_ground_truth_markers
@@ -82,6 +90,9 @@ if __name__ == "__main__":
     # Publisher of bounding box
     pub_clusters = rospy.Publisher("/kitti/points_clusters", PointCloud2, queue_size=1000000)
 
+    static_tf_sender = tf.TransformBroadcaster();
+    pose_tf_sender = tf.TransformBroadcaster();
+
     # Shared header for synchronization
     header_ = std_msgs.msg.Header()
     header_.stamp = rospy.Time.now()
@@ -92,8 +103,15 @@ if __name__ == "__main__":
     pcd_path = None
     bin_path = path + "/" + "velodyne_points/data"
     timestamp_file = path + "/" + "velodyne_points/timestamps.txt"
-    xml_path = path + "/" + "tracklet_labels.xml"
-    calib_path = None
+
+    oxts_path = path + "/" + "oxts/data"
+
+    tracklet_file = path + "/" + "tracklet_labels.xml"
+
+    # calib_imu_to_velo_file = path + "/../calib_cam_to_cam.txt"
+    # calib_imu_to_velo_file = path + "/../calib_velo_to_cam.txt"
+    calib_imu_to_velo_file = path + "/../calib_imu_to_velo.txt"
+
     # img_path = path + "/" + "image_0[0-3]/data/"
     img_path = path + "/" + "image_02/data"
 
@@ -107,6 +125,29 @@ if __name__ == "__main__":
             # t = dt.datetime.strptime(line, '%Y-%m-%d %H:%M:%S.%f')
             timestamps.append(t)
 
+    poses = []
+    for pose in kitti.get_oxts_packets_and_poses(oxts_path):
+        poses.append(pose[1])
+    # print len(poses)
+
+    if calib_imu_to_velo_file:
+        calib = read_calib_file(calib_imu_to_velo_file)
+
+        # proj_velo = proj_to_velo(calib)[:, :3]
+        # euler_static = transform.rotationMatrixToEulerAngles(np.array(calib['R']).reshape(-1, 3))
+        # translation_static = calib['T']
+
+        imu2vel = np.zeros((4, 4))
+        imu2vel[:3,:3] = np.array(calib['R']).reshape(-1, 3)
+        imu2vel[:3,3] = calib['T']
+        imu2vel[3,3] = 1.
+
+        vel2imu = trans.inverse_matrix(imu2vel)
+        translation_static = trans.translation_from_matrix(vel2imu)
+        quaternion_static = trans.quaternion_from_matrix(vel2imu)
+        # print translation_static
+        # print quaternion_static
+
     datas = []
     if os.path.isdir(bin_path):
         for lists in os.listdir(bin_path):
@@ -117,7 +158,7 @@ if __name__ == "__main__":
     datas.sort()
 
     # bounding_boxes[frame index] 
-    bounding_boxes, tracklet_counter = read_label_from_xml(xml_path, care_objects)
+    bounding_boxes, tracklet_counter = read_label_from_xml(tracklet_file, care_objects)
 
     idx = 0
     # support circular access ...-2,-1,0,1,2...
@@ -137,12 +178,33 @@ if __name__ == "__main__":
         # print (timestamps[idx] - dt.datetime(1970,1,1)).total_seconds()
         header_.stamp = rospy.Time.from_sec((timestamps[idx] - dt.datetime(1970,1,1)).total_seconds())
 
-        if calib_path:
-            calib = read_calib_file(calib_path)
-            proj_velo = proj_to_velo(calib)[:, :3]
+        """
+            :param translation: the translation of the transformtion as a tuple (x, y, z)
+            :param rotation: the rotation of the transformation as a tuple (x, y, z, w)
+            :param time: the time of the transformation, as a rospy.Time()
+            :param child: child frame in tf, string
+            :param parent: parent frame in tf, string
+            Broadcast the transformation from tf frame child to parent on ROS topic ``"/tf"``.
+        """
+        static_tf_sender.sendTransform(translation_static,
+                                       quaternion_static,
+                                       header_.stamp,
+                                       "velodyne",
+                                       "imu")
+        # print poses[idx]
+        # print poses[idx][:3,:3]
+        # euler = transform.rotationMatrixToEulerAngles(poses[idx][0:3,0:3])
+
+        translation = trans.translation_from_matrix(poses[idx])
+        quaternion = trans.quaternion_from_matrix(poses[idx])
+        pose_tf_sender.sendTransform(translation,
+                                     quaternion,
+                                     header_.stamp,
+                                     "imu",
+                                     "world")
 
         img_name = os.path.splitext(datas[idx])[0]+".png"
-        img_file = cv2.imread(img_path+"/"+img_name)
+        img_file = cv2.imread(img_path + "/" + img_name)
         if mode != "play":
             img_window = "Kitti"
             # Image Window Setting
