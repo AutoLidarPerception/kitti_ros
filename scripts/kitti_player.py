@@ -61,6 +61,11 @@ def on_keyboard(name_dev):
 if __name__ == "__main__":
     # ROS parameters
     keyboard_file = rospy.get_param("/kitti_player/keyboard_file", "/dev/input/event3")
+
+    vel_frame_ = rospy.get_param("/kitti_player/vel_frame", "velodyne")
+    imu_frame_ = rospy.get_param("/kitti_player/imu_frame", "imu")
+    world_frame_ = rospy.get_param("/kitti_player/world_frame", "world")
+
     mode = rospy.get_param("/kitti_player/mode", "observation")
     fps = rospy.get_param("/kitti_player/fps", 10)
     filter_by_camera_angle_ = rospy.get_param("/kitti_player/filter_by_camera_angle", True)
@@ -100,20 +105,18 @@ if __name__ == "__main__":
 
     fps = rospy.Rate(fps)
 
-    pcd_path = None
-    bin_path = path + "/" + "velodyne_points/data"
     timestamp_file = path + "/" + "velodyne_points/timestamps.txt"
 
+    pcd_path = None
+    bin_path = path + "/" + "velodyne_points/data"
     oxts_path = path + "/" + "oxts/data"
-
-    tracklet_file = path + "/" + "tracklet_labels.xml"
+    # img_path = path + "/" + "image_0[0-3]/data/"
+    img_path = path + "/" + "image_02/data"
 
     # calib_imu_to_velo_file = path + "/../calib_cam_to_cam.txt"
     # calib_imu_to_velo_file = path + "/../calib_velo_to_cam.txt"
     calib_imu_to_velo_file = path + "/../calib_imu_to_velo.txt"
-
-    # img_path = path + "/" + "image_0[0-3]/data/"
-    img_path = path + "/" + "image_02/data"
+    tracklet_file = path + "/" + "tracklet_labels.xml"
 
     timestamps = []
     with open(timestamp_file, 'r') as f:
@@ -125,10 +128,36 @@ if __name__ == "__main__":
             # t = dt.datetime.strptime(line, '%Y-%m-%d %H:%M:%S.%f')
             timestamps.append(t)
 
+    bin_files = []
+    if os.path.isdir(bin_path):
+        for f in os.listdir(bin_path):
+            if os.path.isdir(f):
+                continue
+            else:
+                bin_files.append(f)
+    bin_files.sort()
+
+    pose_files = []
+    if os.path.isdir(oxts_path):
+        for f in os.listdir(oxts_path):
+            if os.path.isdir(f):
+                continue
+            else:
+                pose_files.append(oxts_path + "/" + f)
+    pose_files.sort()
     poses = []
-    for pose in kitti.get_oxts_packets_and_poses(oxts_path):
+    for pose in kitti.get_oxts_packets_and_poses(pose_files):
         poses.append(pose[1])
     # print len(poses)
+
+    img_files = []
+    if os.path.isdir(img_path):
+        for f in os.listdir(img_path):
+            if os.path.isdir(f):
+                continue
+            else:
+                img_files.append(f)
+    img_files.sort()
 
     if calib_imu_to_velo_file:
         calib = read_calib_file(calib_imu_to_velo_file)
@@ -148,21 +177,12 @@ if __name__ == "__main__":
         # print translation_static
         # print quaternion_static
 
-    datas = []
-    if os.path.isdir(bin_path):
-        for lists in os.listdir(bin_path):
-            if os.path.isdir(lists):
-                continue
-            else:
-                datas.append(lists)
-    datas.sort()
-
     # bounding_boxes[frame index] 
     bounding_boxes, tracklet_counter = read_label_from_xml(tracklet_file, care_objects)
 
     idx = 0
     # support circular access ...-2,-1,0,1,2...
-    while idx < len(datas):
+    while idx < len(bin_files):
         # CTRL+C exit
         if rospy.is_shutdown():
             print ""
@@ -170,8 +190,11 @@ if __name__ == "__main__":
             print "[INFO] ros node had shutdown..."
             sys.exit(0)
 
-        pc = load_pc_from_bin(bin_path + "/" + datas[idx])
+        ##TODO read data
+        pc = load_pc_from_bin(bin_path + "/" + bin_files[idx])
         print "\n[",timestamps[idx],"]","# of Point Clouds:", pc.size
+
+        image = cv2.imread(img_path + "/" + img_files[idx])
 
         ##TODO timestamp
         #header_.stamp = rospy.Time.from_sec(timestamps[idx].total_seconds())
@@ -186,34 +209,27 @@ if __name__ == "__main__":
             :param parent: parent frame in tf, string
             Broadcast the transformation from tf frame child to parent on ROS topic ``"/tf"``.
         """
-        static_tf_sender.sendTransform(translation_static,
-                                       quaternion_static,
+        static_tf_sender.sendTransform(translation_static, quaternion_static,
                                        header_.stamp,
-                                       "velodyne",
-                                       "imu")
+                                       vel_frame_, imu_frame_)
         # print poses[idx]
         # print poses[idx][:3,:3]
         # euler = transform.rotationMatrixToEulerAngles(poses[idx][0:3,0:3])
 
         translation = trans.translation_from_matrix(poses[idx])
         quaternion = trans.quaternion_from_matrix(poses[idx])
-        pose_tf_sender.sendTransform(translation,
-                                     quaternion,
+        pose_tf_sender.sendTransform(translation, quaternion,
                                      header_.stamp,
-                                     "imu",
-                                     "world")
-
-        img_name = os.path.splitext(datas[idx])[0]+".png"
-        img_file = cv2.imread(img_path + "/" + img_name)
+                                     imu_frame_, world_frame_)
         if mode != "play":
             img_window = "Kitti"
             # Image Window Setting
             screen_res = 1280, 720
-            scale_width = screen_res[0] / img_file.shape[1]
-            scale_height = screen_res[1] / img_file.shape[0]
+            scale_width = screen_res[0] / image.shape[1]
+            scale_height = screen_res[1] / image.shape[0]
             scale = min(scale_width, scale_height)
-            window_width = int(img_file.shape[1] * scale)
-            window_height = int(img_file.shape[0] * scale)*2
+            window_width = int(image.shape[1] * scale)
+            window_height = int(image.shape[0] * scale)*2
             cv2.namedWindow(img_window, cv2.WINDOW_NORMAL)
             cv2.resizeWindow(img_window, window_width, window_height)
 
@@ -246,7 +262,7 @@ if __name__ == "__main__":
             publish_ground_truth_markers(object_marker_pub_, header_, corners.reshape(-1, 3))
             # publish_clusters(pub_clusters, header_, pc, corners.reshape(-1, 3))
         else:
-            print "no object in current frame: " + datas[idx]
+            print "no object in current frame: " + bin_files[idx]
             # publish empty message
             publish_ground_truth_boxes(ground_truth_pub_, header_, None, None, None)
             publish_ground_truth_markers(object_marker_pub_, header_, None)
@@ -255,11 +271,11 @@ if __name__ == "__main__":
         """
             publish RGB image
         """
-        publish_raw_image(pub_img, header_, img_file)
+        publish_raw_image(pub_img, header_, image)
         print "###########"
-        print "[INFO] Show image: ",img_name
+        print "[INFO] Show image: ",img_files[idx]
         if mode != "play":
-            cv2.imshow(img_window, img_file)
+            cv2.imshow(img_window, image)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
             idx += 1
@@ -275,7 +291,7 @@ if __name__ == "__main__":
             while not playing:
                 if KEY_VAL==NEXT_FRAME:
                     idx += 1
-                    if idx >= len(datas):
+                    if idx >= len(bin_files):
                         idx = 0
                     KEY_VAL = KEY_IDLE
                     break
