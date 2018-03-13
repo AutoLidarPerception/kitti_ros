@@ -116,7 +116,9 @@ if __name__ == "__main__":
     # calib_imu_to_velo_file = path + "/../calib_cam_to_cam.txt"
     # calib_imu_to_velo_file = path + "/../calib_velo_to_cam.txt"
     calib_imu_to_velo_file = path + "/../calib_imu_to_velo.txt"
+
     tracklet_file = path + "/" + "tracklet_labels.xml"
+    use_gt = os.path.exists(tracklet_file)
 
     timestamps = []
     with open(timestamp_file, 'r') as f:
@@ -177,8 +179,9 @@ if __name__ == "__main__":
         # print translation_static
         # print quaternion_static
 
-    # bounding_boxes[frame index] 
-    bounding_boxes, tracklet_counter = read_label_from_xml(tracklet_file, care_objects)
+    # bounding_boxes[frame index]
+    if use_gt:
+        bounding_boxes, tracklet_counter = read_label_from_xml(tracklet_file, care_objects)
 
     idx = 0
     # support circular access ...-2,-1,0,1,2...
@@ -241,7 +244,7 @@ if __name__ == "__main__":
         rotates_z = None
         size = None
         corners = None
-        if idx in bounding_boxes.keys():
+        if use_gt and idx in bounding_boxes.keys():
             places = bounding_boxes[idx]["place"]
             # avoid IndexError: too many indices for array
             if bounding_boxes[idx]["rotate"].ndim > 1:
@@ -261,7 +264,7 @@ if __name__ == "__main__":
             # publish_img_bb(pub_img_bb, header_, corners.reshape(-1, 3))
             publish_ground_truth_markers(object_marker_pub_, header_, corners.reshape(-1, 3))
             # publish_clusters(pub_clusters, header_, pc, corners.reshape(-1, 3))
-        else:
+        elif use_gt:
             print "no object in current frame: " + bin_files[idx]
             # publish empty message
             publish_ground_truth_boxes(ground_truth_pub_, header_, None, None, None)

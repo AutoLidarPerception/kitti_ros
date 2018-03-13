@@ -158,13 +158,16 @@ include_directories(
 ## Install ##
 #############
 catkin_install_python(PROGRAMS
-    scripts/kitti_player.py
     scripts/parse_xml.py
+    scripts/kitti.py
+    scripts/kitti_player.py
+    scripts/kitti_continue_player.py
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/kitti_ros
 )
 install(FILES
     README.md
-    launch/default.launch
+    launch/kitti_continue_player.launch
+    launch/kitti_player.launch
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/kitti_ros
 )
 

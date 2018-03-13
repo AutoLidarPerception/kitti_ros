@@ -118,7 +118,18 @@ def proj_to_velo(calib_data):
 # Filter camera angles for KiTTI Datasets
 def filter_by_camera_angle(pc):
     bool_in = np.logical_and((pc[:, 1] < pc[:, 0] - 0.27), (-pc[:, 1] < pc[:, 0] - 0.27))
-    # bool_in = np.logical_and((places[:, 1] < places[:, 0]), (-places[:, 1] < places[:, 0]))
+    """
+    /*
+     * @brief KiTTI Velodyne Coordinate
+     *          |x(forward)
+     *      C   |   D
+     *          |
+     *  y---------------
+     *          |
+     *      B   |   A
+     */
+    """
+    # bool_in = np.where(pc[:, 0] > 0)
     return pc[bool_in]
 
 def create_publish_obj(obj, places, rotates, size):

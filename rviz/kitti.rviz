@@ -6,16 +6,19 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Coordinate1
+        - /Coordinate1/Velodyne1
         - /Camera1/RGB-L1
         - /BoundingBox1/Clusters1
         - /BoundingBox1/MergedClusters1
         - /BoundingBox1/TrackingObjectsVel1
+        - /KittiReplay1/Raw1
+        - /Segment1/NoMerged1
+        - /Segment1/NoMerged1/MarkersBB1
         - /Segment1/Merged1
         - /Tracking1
         - /Tracking1/ObjectTrajectories1
       Splitter Ratio: 0.5
-    Tree Height: 494
+    Tree Height: 602
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -76,7 +79,7 @@ Visualization Manager:
           Enabled: true
           Length: 100
           Name: Velodyne
-          Radius: 0.800000012
+          Radius: 0.25
           Reference Frame: velodyne
           Value: true
       Enabled: true
@@ -208,7 +211,7 @@ Visualization Manager:
           Queue Size: 1
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.0299999993
+          Size (m): 0.100000001
           Style: Flat Squares
           Topic: /kitti/points_raw
           Unreliable: false
@@ -239,7 +242,7 @@ Visualization Manager:
           Color: 255; 255; 255
           Color Transformer: Intensity
           Decay Time: 0
-          Enabled: false
+          Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 0.99000001
@@ -256,7 +259,7 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: false
+          Value: true
         - Alpha: 1
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
@@ -364,7 +367,7 @@ Visualization Manager:
               Enabled: true
               Invert Rainbow: false
               Max Color: 255; 255; 255
-              Max Intensity: 251.600006
+              Max Intensity: 243.913055
               Min Color: 0; 0; 0
               Min Intensity: 0
               Name: Clusters
@@ -380,33 +383,33 @@ Visualization Manager:
               Use rainbow: true
               Value: true
             - Class: rviz/MarkerArray
-              Enabled: true
+              Enabled: false
               Marker Topic: /segment/marker_clusters
-              Name: MarkerClusters
+              Name: MarkersBB
               Namespaces:
                 {}
               Queue Size: 100
-              Value: true
+              Value: false
             - Class: rviz/MarkerArray
               Enabled: true
               Marker Topic: /segment/marker_objects
-              Name: MarkerObjects
+              Name: MarkersOBB
               Namespaces:
                 {}
               Queue Size: 100
               Value: true
-          Enabled: false
+          Enabled: true
           Name: NoMerged
         - Class: rviz/Group
           Displays:
             - Class: rviz/MarkerArray
-              Enabled: true
+              Enabled: false
               Marker Topic: /segment/marker_objects
               Name: MarkerObjects
               Namespaces:
                 {}
               Queue Size: 100
-              Value: true
+              Value: false
             - Alpha: 1
               Autocompute Intensity Bounds: true
               Autocompute Value Bounds:
@@ -422,7 +425,7 @@ Visualization Manager:
               Enabled: true
               Invert Rainbow: false
               Max Color: 255; 255; 255
-              Max Intensity: 245.555557
+              Max Intensity: 247.03125
               Min Color: 0; 0; 0
               Min Intensity: 0
               Name: MergedObjects
@@ -445,7 +448,7 @@ Visualization Manager:
                 {}
               Queue Size: 100
               Value: true
-          Enabled: true
+          Enabled: false
           Name: Merged
       Enabled: false
       Name: Segment
@@ -656,7 +659,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.0299999993
+          Size (m): 0.0799999982
           Style: Flat Squares
           Topic: /kitti/points_raw
           Unreliable: false
@@ -695,7 +698,23 @@ Visualization Manager:
           Value: false
         - Class: rviz/MarkerArray
           Enabled: false
-          Marker Topic: /learning/marker_GTs
+          Marker Topic: /tracking/segments_coarse
+          Name: InitialSegments
+          Namespaces:
+            {}
+          Queue Size: 100
+          Value: false
+        - Class: rviz/MarkerArray
+          Enabled: false
+          Marker Topic: /tracking/segments_predict
+          Name: PredictSegments
+          Namespaces:
+            {}
+          Queue Size: 100
+          Value: false
+        - Class: rviz/MarkerArray
+          Enabled: false
+          Marker Topic: /tracking/segments
           Name: Segments
           Namespaces:
             {}
@@ -752,25 +771,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 139.837051
+      Distance: 96.4623718
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 74.4044647
-        Y: -4.89104128
-        Z: -29.1666813
+        X: 47.496685
+        Y: 3.23263669
+        Z: -11.8282948
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.649797916
+      Pitch: 0.639796674
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.31217051
+      Yaw: 3.34722066
     Saved: ~
 Window Geometry:
   BirdEyeView:
@@ -782,7 +801,7 @@ Window Geometry:
   Height: 1038
   Hide Left Dock: false
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd00000004000000000000033000000387fc020000000bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006100fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d006100670065010000020a0000006d0000000000000000fb0000000a0049006d00610067006501000001d1000000b50000000000000000fb000000100044006900730070006c00610079007301000000280000022f000000d700fffffffb0000000a005200470042002d004c010000025d000001520000001600ffffff00000001000001ca00000387fc0200000004fc00000028000003870000000000fffffffaffffffff0100000003fb000000100054004c00440054007200610063006b0000000000ffffffff0000007100fffffffb0000001a00420069007200640045007900650056006900650077004200420000000000ffffffff0000009b00fffffffb0000001600420069007200640045007900650056006900650077000000038c000001ca0000008800fffffffb0000000a0056006900650077007300000000280000024f000000ad00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000780000000f8fc0100000002fb0000000c00430061006d00650072006102000007800000001b00000556000002e5fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007800000003bfc0100000002fb0000000800540069006d00650100000000000007800000030000fffffffb0000000800540069006d006501000000000000045000000000000000000000044a0000038700000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000027400000387fc020000000bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006100fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d006100670065010000020a0000006d0000000000000000fb0000000a0049006d00610067006501000001d1000000b50000000000000000fb000000100044006900730070006c00610079007301000000280000029b000000d700fffffffb0000000a005200470042002d004c01000002c9000000e60000001600ffffff00000001000001ca00000387fc0200000004fc00000028000003870000000000fffffffaffffffff0100000003fb000000100054004c00440054007200610063006b0000000000ffffffff0000007100fffffffb0000001a00420069007200640045007900650056006900650077004200420000000000ffffffff0000009b00fffffffb0000001600420069007200640045007900650056006900650077000000038c000001ca0000008800fffffffb0000000a0056006900650077007300000000280000024f000000ad00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000780000000f8fc0100000002fb0000000c00430061006d00650072006102000007800000001b00000556000002e5fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007800000003bfc0100000002fb0000000800540069006d00650100000000000007800000030000fffffffb0000000800540069006d00650100000000000004500000000000000000000005060000038700000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   RGB-L:
     collapsed: false
   Selection:
