@@ -7,9 +7,9 @@
     <arg name="mode" default="play" />
 
     <!-- default 10Hz, the same as LiDAR -->
-    <arg name="fps" default="8" />
+    <!--<arg name="fps" default="8" />-->
     <!-- for learning node training -->
-    <!--<arg name="fps" default="0.5" />-->
+    <arg name="fps" default="0.5" />
 
     <arg name="dataset_file" default="$(find kitti_ros)/../../data/training_datasets.txt"/>
 
@@ -24,10 +24,12 @@
         <param name="dataset_file" value="$(arg dataset_file)"/>
 
         <!-- []  means no forground objects -->
-        <!--<rosparam param="care_objects">[ ]</rosparam>-->
+        <!--<rosparam param="care_objects">[]</rosparam>-->
         <!--<rosparam param="care_objects">['Car','Van','Truck','Pedestrian','Sitter','Cyclist','Tram','Misc']</rosparam>-->
-        <!--<rosparam param="care_objects">['Pedestrian']</rosparam>-->
-        <rosparam param="care_objects">['Car', 'Van', 'Truck']</rosparam>
+        <!--Only Vehicles-->
+        <!--<rosparam param="care_objects">['Car', 'Van', 'Truck']</rosparam>-->
+        <!--Foreground Objects-->
+        <rosparam param="care_objects">['Car','Van','Truck','Pedestrian','Cyclist']</rosparam>
 
         <param name="filter_by_camera_angle" value="$(arg filter_by_camera_angle)"/>
     </node>

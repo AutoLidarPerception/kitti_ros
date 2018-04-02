@@ -17,20 +17,28 @@
     <!--<arg name="fps" default="0.5" />-->
 
     <!-- static scenario-->
-    <!-- positives: 82 -->
-    <!--<arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_26/2011_09_26_drive_0014_sync"/>-->
+    <!--城市道路十字路口-->
     <!--<arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_26/2011_09_26_drive_0017_sync"/>-->
-    <!--<arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_26/2011_09_26_drive_0018_sync"/>-->
+    <!--乡村道路十字路口-->
     <!--<arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_26/2011_09_26_drive_0060_sync"/>-->
 
     <!-- move scenario-->
-    <!--<arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_26/2011_09_26_drive_0005_sync"/>-->
-    <!--<arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_26/2011_09_26_drive_0091_sync"/>-->
+    <!--铁路旁-->
     <!--<arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_26/2011_09_26_drive_0001_sync"/>-->
+    <!--城郊道路-->
+    <!--<arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_26/2011_09_26_drive_0005_sync"/>-->
+    <!--城市道路-->
+    <arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_26/2011_09_26_drive_0014_sync"/>
+    <!--城市道路十字路口-->
+    <!--<arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_26/2011_09_26_drive_0018_sync"/>-->
+    <!--小镇美食街-->
+    <!--<arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_26/2011_09_26_drive_0091_sync"/>-->
+    <!--林间道路-->
     <!--<arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_26/2011_09_26_drive_0027_sync"/>-->
     <!-- without ground truth -->
-    <arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_26/2011_09_26_drive_0117_sync"/>
-
+    <!--复杂住宅区-->
+    <!--<arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_26/2011_09_26_drive_0117_sync"/>-->
+    <!--红绿灯路口-->
     <!--<arg name="kitti_data_path" default="$(find kitti_ros)/../../data/2011_09_29/2011_09_29_drive_0026_sync"/>-->
 
     <arg name="filter_by_camera_angle" default="true"/>
