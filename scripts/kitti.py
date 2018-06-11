@@ -18,7 +18,6 @@ import numpy as np
 # self-implemented XML parser
 from parse_xml import parseXML
 
-
 # Load PointCloud data from pcd file
 def load_pc_from_pcd(pcd_path):
     p = pcl.load(pcd_path)
