@@ -8,12 +8,12 @@ project(kitti_ros)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  cv_bridge
-  geometry_msgs
-  rospy
-  sensor_msgs
-  std_msgs
-  visualization_msgs
+    cv_bridge
+    geometry_msgs
+    rospy
+    sensor_msgs
+    std_msgs
+    visualization_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -120,7 +120,6 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -158,8 +157,9 @@ include_directories(
 ## Install ##
 #############
 catkin_install_python(PROGRAMS
-    scripts/parse_xml.py
-    scripts/kitti.py
+    scripts/utils/XmlParser.py
+    scripts/utils/Publisher.py
+    scripts/utils/KittiPreprocessor.py
     scripts/kitti_player.py
     scripts/kitti_continue_player.py
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/kitti_ros
