@@ -24,16 +24,9 @@ import numpy as np
 
 import pykitti.utils as kitti
 # import transform.transform as transform
+import utils.KittiPreprocessor as Preprocessor
+import utils.Publisher as KittiPublisher
 
-from kitti import read_label_from_xml
-from kitti import load_pc_from_bin
-from kitti import filter_by_camera_angle
-from kitti import get_boxcorners
-from kitti import read_calib_file
-from kitti import publish_raw_clouds
-from kitti import publish_ground_truth_boxes
-from kitti import publish_ground_truth_markers
-from kitti import publish_raw_image
 
 '''
     sudo apt-get install python-evdev
@@ -162,7 +155,7 @@ if __name__ == "__main__":
     img_files.sort()
 
     if calib_imu_to_velo_file:
-        calib = read_calib_file(calib_imu_to_velo_file)
+        calib = kitti.read_calib_file(calib_imu_to_velo_file)
 
         # proj_velo = proj_to_velo(calib)[:, :3]
         # euler_static = transform.rotationMatrixToEulerAngles(np.array(calib['R']).reshape(-1, 3))
@@ -181,7 +174,7 @@ if __name__ == "__main__":
 
     # bounding_boxes[frame index]
     if use_gt:
-        bounding_boxes, tracklet_counter = read_label_from_xml(tracklet_file, care_objects)
+        bounding_boxes, tracklet_counter = Preprocessor.read_label_from_xml(tracklet_file, care_objects)
 
     idx = 0
     # support circular access ...-2,-1,0,1,2...
@@ -194,7 +187,7 @@ if __name__ == "__main__":
             sys.exit(0)
 
         ##TODO read data
-        pc = load_pc_from_bin(bin_path + "/" + bin_files[idx])
+        pc = Preprocessor.load_pc_from_bin(bin_path + "/" + bin_files[idx])
         print "\n[",timestamps[idx],"]","# of Point Clouds:", pc.size
 
         image = cv2.imread(img_path + "/" + img_files[idx])
@@ -238,7 +231,7 @@ if __name__ == "__main__":
 
         # Camera angle filters
         if filter_by_camera_angle_:
-            pc = filter_by_camera_angle(pc)
+            pc = Preprocessor.filter_by_camera_angle(pc)
 
         places = None
         rotates_z = None
@@ -254,27 +247,27 @@ if __name__ == "__main__":
             size = bounding_boxes[idx]["size"]
 
             # Create 8 corners of bounding box
-            corners = get_boxcorners(places, rotates_z, size)
+            corners = Preprocessor.get_boxcorners(places, rotates_z, size)
 
-        publish_raw_clouds(pub_points, header_, pc)
+        KittiPublisher.publish_raw_clouds(pub_points, header_, pc)
 
         if corners is not None:
-            publish_ground_truth_boxes(ground_truth_pub_, header_, places, rotates_z, size)
+            KittiPublisher.publish_ground_truth_boxes(ground_truth_pub_, header_, places, rotates_z, size)
             # publish_bounding_vertex(pub_vertex, header_, corners.reshape(-1, 3))
             # publish_img_bb(pub_img_bb, header_, corners.reshape(-1, 3))
-            publish_ground_truth_markers(object_marker_pub_, header_, corners.reshape(-1, 3))
+            KittiPublisher.publish_ground_truth_markers(object_marker_pub_, header_, corners.reshape(-1, 3))
             # publish_clusters(pub_clusters, header_, pc, corners.reshape(-1, 3))
         elif use_gt:
             print "no object in current frame: " + bin_files[idx]
             # publish empty message
-            publish_ground_truth_boxes(ground_truth_pub_, header_, None, None, None)
-            publish_ground_truth_markers(object_marker_pub_, header_, None)
+            KittiPublisher.publish_ground_truth_boxes(ground_truth_pub_, header_, None, None, None)
+            KittiPublisher.publish_ground_truth_markers(object_marker_pub_, header_, None)
 
 
         """
             publish RGB image
         """
-        publish_raw_image(pub_img, header_, image)
+        KittiPublisher.publish_raw_image(pub_img, header_, image)
         print "###########"
         print "[INFO] Show image: ",img_files[idx]
         if mode != "play":
