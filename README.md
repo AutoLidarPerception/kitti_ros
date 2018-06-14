@@ -1,7 +1,7 @@
 # kitti_ros
 　　[KiTTI dataset](http://www.cvlibs.net/datasets/kitti/) process based-on ROS.
 <p align="center">
-    <img src="./readme/demo.png" width="720px" alt=""/>
+    <img src=".readme/demo.png" width="720px" alt=""/>
 </p>
 
 
