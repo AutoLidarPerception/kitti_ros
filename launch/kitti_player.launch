@@ -66,5 +66,4 @@
         <param name="filter_by_camera_angle" value="$(arg filter_by_camera_angle)"/>
     </node>
 
-
 </launch>
