@@ -53,6 +53,10 @@ $ roslaunch kitti_ros kitti_continue_player.launch
 # quick exit
 $ ./killall.sh
 ```
+　**Keyboard Control**
++ `SPACE`: Play/Pause KiTTI data replay.
++ `LEFT ARROW`: Play last frame of data.
++ `RIGHT ARROW`: Play next frame of data.
 
 ## [Parameters](./launch/kitti_player.launch)
 + `keyboard_file`: Keyboard listener is based on Linux input subsystem.
