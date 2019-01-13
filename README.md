@@ -14,15 +14,15 @@
     - [ ] Publish any Camera `0-3` image.
 - [x] Publish `*.txt` Pose in tf between `imu_frame` and `world_frame`.
 - [ ] Publish `*.txt` Calibration in tf between Coordinates.
-- [x] KiTTI LiDAR-Camera Fusion, [kitti_lidar_camera](https://github.com/Durant35/kitti_lidar_camera)
+- [x] KiTTI LiDAR-Camera Fusion, [kitti_lidar_camera](https://github.com/LidarPerception/kitti_lidar_camera)
 
 
 ## How to use
-　We name your ros workspace as `CATKIN_WS` and `git clone` [kitti_ros](https://github.com/Durant35/kitti_ros) as a ros package.
+　We name your ros workspace as `CATKIN_WS` and `git clone` [kitti_ros](https://github.com/LidarPerception/kitti_ros) as a ros package.
 ```bash
 # clone source code
 $ cd $(CATKIN_WS)/src
-$ git clone https://github.com/Durant35/kitti_ros
+$ git clone https://github.com/LidarPerception/kitti_ros
 
 # build your ros workspace
 $ cd $(CATKIN_WS)
