@@ -33,26 +33,28 @@ $ sudo chmod 777 /dev/input/event3
 
 # [demo] launch kitti_ros's kitti_player with rviz
 $ source devel/setup.bash
-$ roslaunch kitti_ros demo.launch
+$ roslaunch kitti_ros demo.launch kitti_data_path:=path-to-your-KiTTI-dataset
 ```
-　We recommend to use **quickstart** for KiTTI's LiDAR-perception algorithms testing and model training.
+　Learn more about parameter: `kitti_data_path` from [Here](#parameters). We recommend to use **quickstart** for KiTTI's LiDAR-perception algorithms testing and model training.
 ```bash
 # copy quickstart bash scripts
 $ cd $(CATKIN_WS)/src/kitti_ros
-$ mv quickstart.sh killall.sh ../..
+$ cp quickstart.sh killall.sh ../..
 
 # quick start kitti_ros basic environment and visualization
 $ cd $(CATKIN_WS)
 $ ./quickstart.sh 
 
 # [option 1] launch kitti_ros's kitti_player for frame-by-frame algorithm testing
-$ roslaunch kitti_ros kitti_player.launch
+$ roslaunch kitti_ros kitti_player.launch kitti_data_path:=path-to-your-KiTTI-dataset
 # [option 2] launch kitti_ros's kitti_continue_player for data replay, like model training
-$ roslaunch kitti_ros kitti_continue_player.launch
+$ roslaunch kitti_ros kitti_continue_player.launch dataset_file:=path-to-your-KiTTI-dataset-list-file
 
 # quick exit
 $ ./killall.sh
 ```
+　Learn more about parameter: `dataset_file` from [Here](#parameters).
+
 　**Keyboard Control**
 + `SPACE`: Play/Pause KiTTI data replay.
 + `LEFT ARROW`: Play last frame of data.

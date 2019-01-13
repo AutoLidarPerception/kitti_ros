@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+    <!--car model for ui display-->
+    <group>
+        <arg name="gui" default="False" />
+        <!--<arg name="gui" default="True" />-->
+        <param name="use_gui" value="$(arg gui)"/>
+        <param name="robot_description" textfile="$(find kitti_ros)/rviz/car_model/default.urdf" />
+        <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher"  />
+        <node pkg="robot_state_publisher" type="state_publisher" name="robot_state_publisher"  />
+    </group>
+</launch>
