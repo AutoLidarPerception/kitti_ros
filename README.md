@@ -23,6 +23,9 @@
 # clone source code
 $ cd $(CATKIN_WS)/src
 $ git clone https://github.com/LidarPerception/kitti_ros
+$ cd kitti_ros
+# install python's dependencies
+$ pip install -r requirements.txt 
 
 # build your ros workspace
 $ cd $(CATKIN_WS)
