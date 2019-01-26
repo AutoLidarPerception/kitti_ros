@@ -1,5 +1,5 @@
 # kitti_ros
-　　[KiTTI dataset](http://www.cvlibs.net/datasets/kitti/) process based-on ROS.
+　　A ROS-based player to replay [KiTTI dataset](http://www.cvlibs.net/datasets/kitti/).
 <p align="center">
     <img src=".readme/demo.png" width="720px" alt=""/>
 </p>
