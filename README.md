@@ -1,5 +1,5 @@
 # kitti_ros
-　　[KiTTI dataset](http://www.cvlibs.net/datasets/kitti/) process based-on ROS.
+　　A ROS-based player to replay [KiTTI dataset](http://www.cvlibs.net/datasets/kitti/).
 <p align="center">
     <img src=".readme/demo.png" width="720px" alt=""/>
 </p>
@@ -14,15 +14,18 @@
     - [ ] Publish any Camera `0-3` image.
 - [x] Publish `*.txt` Pose in tf between `imu_frame` and `world_frame`.
 - [ ] Publish `*.txt` Calibration in tf between Coordinates.
-- [x] KiTTI LiDAR-Camera Fusion, [kitti_lidar_camera](https://github.com/Durant35/kitti_lidar_camera)
+- [x] KiTTI LiDAR-Camera Fusion, [kitti_lidar_camera](https://github.com/LidarPerception/kitti_lidar_camera)
 
 
 ## How to use
-　We name your ros workspace as `CATKIN_WS` and `git clone` [kitti_ros](https://github.com/Durant35/kitti_ros) as a ros package.
+　We name your ros workspace as `CATKIN_WS` and `git clone` [kitti_ros](https://github.com/LidarPerception/kitti_ros) as a ros package.
 ```bash
 # clone source code
 $ cd $(CATKIN_WS)/src
-$ git clone https://github.com/Durant35/kitti_ros
+$ git clone https://github.com/LidarPerception/kitti_ros
+$ cd kitti_ros
+# install python's dependencies
+$ pip install -r requirements.txt 
 
 # build your ros workspace
 $ cd $(CATKIN_WS)
@@ -33,26 +36,28 @@ $ sudo chmod 777 /dev/input/event3
 
 # [demo] launch kitti_ros's kitti_player with rviz
 $ source devel/setup.bash
-$ roslaunch kitti_ros demo.launch
+$ roslaunch kitti_ros demo.launch kitti_data_path:=path-to-your-KiTTI-dataset
 ```
-　We recommend to use **quickstart** for KiTTI's LiDAR-perception algorithms testing and model training.
+　Learn more about parameter: `kitti_data_path` from [Here](#parameters). We recommend to use **quickstart** for KiTTI's LiDAR-perception algorithms testing and model training.
 ```bash
 # copy quickstart bash scripts
 $ cd $(CATKIN_WS)/src/kitti_ros
-$ mv quickstart.sh killall.sh ../..
+$ cp quickstart.sh killall.sh ../..
 
 # quick start kitti_ros basic environment and visualization
 $ cd $(CATKIN_WS)
 $ ./quickstart.sh 
 
 # [option 1] launch kitti_ros's kitti_player for frame-by-frame algorithm testing
-$ roslaunch kitti_ros kitti_player.launch
+$ roslaunch kitti_ros kitti_player.launch kitti_data_path:=path-to-your-KiTTI-dataset
 # [option 2] launch kitti_ros's kitti_continue_player for data replay, like model training
-$ roslaunch kitti_ros kitti_continue_player.launch
+$ roslaunch kitti_ros kitti_continue_player.launch dataset_file:=path-to-your-KiTTI-dataset-list-file
 
 # quick exit
 $ ./killall.sh
 ```
+　Learn more about parameter: `dataset_file` from [Here](#parameters).
+
 　**Keyboard Control**
 + `SPACE`: Play/Pause KiTTI data replay.
 + `LEFT ARROW`: Play last frame of data.
